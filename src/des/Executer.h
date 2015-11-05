@@ -28,36 +28,32 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EXAMPLEMODEL_TEST_H_
-#define DES_EXAMPLEMODEL_TEST_H_
+#ifndef DES_EXECUTER_H_
+#define DES_EXECUTER_H_
 
-#include <prim/prim.h>
+namespace des {
 
-#include <string>
+class Event;
+class Simulator;
 
-#include "des/des.h"
-
-class ExampleModel : public des::Model {
+class Executer {
  public:
-  ExampleModel(des::Simulator* _simulator, const std::string& _name,
-               const Model* _parent, u64 _count, u64 _id);
-  ~ExampleModel();
-  void exampleFunction(s32 _a, s32 _b, s32 _c);
+  explicit Executer(Simulator* _simulator);
+  virtual ~Executer();
+
+  void start();
+  void stop();
+  bool running() const;
+  void addEvent(Event* _event);
 
  private:
-  class ExampleEvent : public des::Event {
-   public:
-    ExampleEvent(des::Model* _model, des::EventHandler _handler);
-    s32 a;
-    s32 b;
-    s32 c;
-  };
+  void run();
 
-  void exampleFunctionHandler(des::Event* _event);
-
-  u64 count_;
-  u64 id_;
-  ExampleEvent evt_;
+  Simulator* simulator_;
+  volatile bool stop_;
+  volatile bool running_;
 };
 
-#endif  // DES_EXAMPLEMODEL_TEST_H_
+}  // namespace des
+
+#endif  // DES_EXECUTER_H_

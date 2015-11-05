@@ -28,37 +28,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EVENT_H_
-#define DES_EVENT_H_
+#ifndef TEST_EXAMPLEMODEL_TEST_H_
+#define TEST_EXAMPLEMODEL_TEST_H_
 
 #include <prim/prim.h>
 
-namespace des {
+#include <string>
 
-class Model;
+#include "des/des.h"
 
-/*
- * This defines an event handler function pointer.
- */
-class Event;
-typedef void (Model::*EventHandler)(Event*);
-
-/*
- * This is the base class for all events.
- */
-class Event {
+class ExampleModel : public des::Model {
  public:
-  Event();
-  Event(Model* _model, EventHandler _handler);
-  Event(Model* _model, EventHandler _handler, u64 _time, u8 _epsilon);
-  virtual ~Event();
+  ExampleModel(des::Simulator* _simulator, const std::string& _name,
+               const Model* _parent, u64 _count, u64 _id);
+  ~ExampleModel();
+  void exampleFunction(s32 _a, s32 _b, s32 _c);
 
-  Model* model;
-  EventHandler handler;
-  u64 time;
-  u8 epsilon;
+ private:
+  class ExampleEvent : public des::Event {
+   public:
+    ExampleEvent(des::Model* _model, des::EventHandler _handler);
+    s32 a;
+    s32 b;
+    s32 c;
+  };
+
+  void exampleFunctionHandler(des::Event* _event);
+
+  u64 count_;
+  u64 id_;
+  ExampleEvent evt_;
 };
 
-}  // namespace des
-
-#endif  // DES_EVENT_H_
+#endif  // TEST_EXAMPLEMODEL_TEST_H_

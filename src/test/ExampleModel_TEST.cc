@@ -28,18 +28,17 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ExampleModel_TEST.h"
+#include "test/ExampleModel_TEST.h"
 
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 
 ExampleModel::ExampleModel(des::Simulator* _simulator, const std::string& _name,
                            const Model* _parent, u64 _count, u64 _id)
     : des::Model(_simulator, _name, _parent), count_(_count),
       id_(_id), evt_(this, static_cast<des::EventHandler>(
-          &ExampleModel::exampleFunctionHandler)) {
-  setDebug(true);
-}
+          &ExampleModel::exampleFunctionHandler)) {}
 
 ExampleModel::~ExampleModel() {}
 
@@ -60,9 +59,8 @@ void ExampleModel::exampleFunctionHandler(des::Event* _event) {
   ExampleEvent* me = dynamic_cast<ExampleEvent*>(_event);
 
   count_--;
-  if ((count_ == id_) && (id_ == 0)) {
-    logf("hello world, from model #%lu", id_);
-    setDebug(false);
+  if (count_ < 5) {
+    logf("hello world, from model #%lu, count %lu", id_, count_);
   }
 
   if (count_ > 0) {

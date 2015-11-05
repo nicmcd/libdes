@@ -28,37 +28,56 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EVENT_H_
-#define DES_EVENT_H_
+#include "des/Executer.h"
 
 #include <prim/prim.h>
 
+#include <cassert>
+
+#include <chrono>
+#include <thread>
+
+#include "des/Event.h"
+#include "des/Simulator.h"
+
 namespace des {
 
-class Model;
+Executer::Executer(Simulator* _simulator)
+    : simulator_(_simulator), stop_(false), running_(false) {}
 
-/*
- * This defines an event handler function pointer.
- */
-class Event;
-typedef void (Model::*EventHandler)(Event*);
+Executer::~Executer() {}
 
-/*
- * This is the base class for all events.
- */
-class Event {
- public:
-  Event();
-  Event(Model* _model, EventHandler _handler);
-  Event(Model* _model, EventHandler _handler, u64 _time, u8 _epsilon);
-  virtual ~Event();
+void Executer::start() {
+  stop_ = false;
+  if (!running_) {
+    std::thread thread(&Executer::run, this);
+  }
+}
 
-  Model* model;
-  EventHandler handler;
-  u64 time;
-  u8 epsilon;
-};
+void Executer::stop() {
+  stop_ = true;
+  while (running_) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+  stop_ = false;
+}
+
+bool Executer::running() const {
+  return running_;
+}
+
+void Executer::addEvent(Event* _event) {
+  u64 tid = std::hash<std::thread::id>(std::this_thread::get_id());
+  printf("%lu adding event\n", tid);
+}
+
+void Executer::run() {
+  assert(!running_);
+  running_ = true;
+
+  printf("%lu running\n", std::this_thread::get_id().hash());
+
+  running_ = false;
+}
 
 }  // namespace des
-
-#endif  // DES_EVENT_H_

@@ -38,13 +38,13 @@ namespace des {
 
 ClockedModel::ClockedModel(const std::string& _name,
                            const ClockedModel* _parent)
-    : ClockedModel(_parent->simulator(), _name, _parent, _parent->cyclePeriod_,
+    : ClockedModel(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
                    _parent->cyclePhase_) {}
 
 ClockedModel::ClockedModel(const std::string& _name,
                            const ClockedModel* _parent, u64 _cyclePeriod,
                            u64 _cyclePhase)
-    : ClockedModel(_parent->simulator(), _name, _parent, _cyclePeriod,
+    : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
                    _cyclePhase) {}
 
 ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
@@ -67,7 +67,7 @@ u64 ClockedModel::cyclePhase() const {
 
 u64 ClockedModel::futureCycle(u32 _cycles) const {
   assert(_cycles > 0);
-  u64 time = simulator()->time();
+  u64 time = simulator->time();
   u64 rem = time % cyclePeriod_;
   if (rem != cyclePhase_) {
     time += (cyclePhase_ - rem);

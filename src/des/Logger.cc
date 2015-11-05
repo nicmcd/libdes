@@ -28,43 +28,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <gtest/gtest.h>
-#include <prim/prim.h>
+#include "des/Logger.h"
 
-#include <cmath>
+#include "des/Simulator.h"
 
-#include <tuple>
-#include <vector>
+namespace des {
 
-#include "des/des.h"
-#include "des/ExampleModel_TEST.h"
+Logger::Logger(des::Simulator* _simulator, const std::string& _name,
+               const Model* _parent)
+    : des::Model(_simulator, _name, _parent) {}
 
-TEST(ExampleModel, benchmark) {
-  const u64 configs[5][2] = {
-    {1,     250000000},
-    {10,    12000000},
-    {100,   800000},
-    {1000,  50000},
-    {10000, 3200}};
+Logger::~Logger() {}
 
-  for (auto&& c : configs) {  // NOLINT
-    u64 numModels = c[0];
-    printf("number of models: %lu\n", numModels);
-    u64 eventsPerModel = c[1];
-
-    des::Simulator* sim = new des::Simulator();
-    std::vector<ExampleModel*> models(numModels);
-    for (u32 id = 0; id < numModels; id++) {
-      models.at(id) = new ExampleModel(sim, "Model_" + std::to_string(id),
-                                       nullptr, eventsPerModel, id);
-    }
-    for (u32 id = 0; id < numModels; id++) {
-      models.at(id)->exampleFunction(1000000, 2000000, 3000000);
-    }
-    sim->simulate(true);
-    for (u32 id = 0; id < numModels; id++) {
-      delete models.at(id);
-    }
-    delete sim;
-  }
+void Logger::log(char* _message) {
+  des::EventHandler handler = static_cast<des::EventHandler>(
+      &Logger::logHandler);
+  simulator()->addEvent(new LogEvent(this, handler,
+                                     simulator()->time(),
+                                     simulator()->epsilon() + 1,
+                                     _message));
 }
+
+Logger::LogEvent::LogEvent(des::Model* _model, des::EventHandler _handler,
+                           u64 _time, u8 _epsilon, char* _message)
+    : des::Event(_model, _handler, _time, _epsilon), message(_message) {}
+
+void Logger::logHandler(des::Event* _event) {
+  LogEvent* evt = reinterpret_cast<LogEvent*>(_event);
+  printf("%s", evt->message);
+  delete[] evt->message;
+  delete evt;
+}
+
+}  // namespace des

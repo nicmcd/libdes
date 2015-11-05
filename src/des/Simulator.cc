@@ -34,18 +34,37 @@
 #include <cstdio>
 #include <ctime>
 
-#include <ratio>
 #include <chrono>
+#include <ratio>
+#include <thread>
 
 #include "des/Event.h"
+#include "des/Executer.h"
+#include "des/Logger.h"
 #include "des/Model.h"
 
 namespace des {
 
-Simulator::Simulator()
-    : time_(0), epsilon_(0) {}
+Simulator::Simulator(u32 _numThreads)
+    : time_(0), epsilon_(0), showStats_(false), logger_(nullptr) {
+  u32 hwThreads = _numThreads;
+  if (hwThreads == 0) {
+    hwThreads = std::thread::hardware_concurrency();
+  }
+  assert(hwThreads > 0);
+  assert(hwThreads <= 64);
+  executers_.resize(hwThreads, NULL);
+  for (auto& e : executers_) {
+    e = new Executer(this);
+  }
+  working_ = 0;
+}
 
-Simulator::~Simulator() {}
+Simulator::~Simulator() {
+  for (auto& e : executers_) {
+    delete e;
+  }
+}
 
 u64 Simulator::time() const {
   return time_;
@@ -59,7 +78,9 @@ void Simulator::addEvent(Event* _event) {
   assert((_event->time == time_) ?
          (_event->epsilon > epsilon_) :
          (_event->time > time_));
-  queue_.push(_event);
+  u32 exe = _event->model->executer;
+  working_.fetch_or(1 << exe);
+  executers_.at(exe)->addEvent(_event);
 }
 
 u64 Simulator::numEvents() const {
@@ -146,18 +167,31 @@ void Simulator::showStats() {
   showStats_ = true;
 }
 
+Logger* Simulator::getLogger() const {
+  return logger_;
+}
+
+void Simulator::setLogger(Logger* _logger) {
+  logger_ = _logger;
+}
+
 void Simulator::addModel(Model* _model) {
+  static u32 executer = 0;
+
   if (!models_.insert(std::make_pair(_model->fullName(), _model)).second) {
     fprintf(stderr, "duplicate component name detected: %s\n",
             _model->fullName().c_str());
     assert(false);
   }
   if (toBeDebugged_.count(_model->fullName()) == 1) {
-    _model->setDebug(true);
+    _model->debug = true;
     u64 res = toBeDebugged_.erase(_model->fullName());
     (void)res;
     assert(res == 1);
   }
+
+  _model->executer = executer;
+  executer = (executer + 1) % executers_.size();
 }
 
 Model* Simulator::getModel(const std::string& _fullName) const {

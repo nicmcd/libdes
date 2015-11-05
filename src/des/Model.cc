@@ -30,24 +30,26 @@
  */
 #include "des/Model.h"
 
+#include <cassert>
 #include <cstdarg>
 
+#include "des/Logger.h"
 #include "des/Simulator.h"
 
 namespace des {
 
 Model::Model(const std::string& _name, const Model* _parent)
-    : Model(_parent->simulator_, _name, _parent) {}
+    : Model(_parent->simulator, _name, _parent) {}
 
 Model::Model(Simulator* _simulator, const std::string& _name,
              const Model* _parent)
-    : debug_(false), simulator_(_simulator), name_(_name),
+    : simulator(_simulator), debug(false), name_(_name),
       parent_(_parent) {
-  simulator_->addModel(this);
+  simulator->addModel(this);
 }
 
 Model::~Model() {
-  simulator_->removeModel(fullName());
+  simulator->removeModel(fullName());
 }
 
 const std::string& Model::baseName() const {
@@ -65,24 +67,39 @@ std::string Model::fullName() const {
   }
 }
 
-void Model::setDebug(bool _debug) {
-  debug_ = _debug;
-}
-
-Simulator* Model::simulator() const {
-  return simulator_;
-}
-
 #ifndef NDEBUGLOG
-s32 debuglogf(const char* _func, s32 _line, const char* _name,
-              u64 _time, u8 _epsilon, const char* _format, ...) {
-  // this will cause errors with multiple threads!!!
-  printf("[%lu:%u] %s:%s:%i | ", _time, _epsilon, _name, _func, _line);
+s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
+              const char* _name, u64 _time, u8 _epsilon, const char* _format,
+              ...) {
+  // create a buffer to create the string in
+  s32 budget = 2000;
+  char* buf = new char[budget];
+  char* ptr = buf;
+  s32 res;
+
+  // format the line header
+  res = snprintf(ptr, budget, "[%lu:%u] %s:%s:%i | ",
+                 _time, (u32)_epsilon, _name, _func, _line);
+  assert((res > 0) && (res < budget));
+  ptr += res;
+  budget -= res;
+
+  // add the rest of the contents
   va_list args;
   va_start(args, _format);
-  vprintf(_format, args);
-  printf("\n");
+  res = vsnprintf(ptr, budget, _format, args);
   va_end(args);
+  assert((res > 0) && (res < budget));
+  ptr += res;
+  budget -= res;
+
+  // add the line ending
+  assert(budget >= 2);
+  ptr[0] = '\n';
+  ptr[1] = '\0';
+
+  // give string to logger to print
+  _logger->log(buf);
   return 0;
 }
 #endif  // NDEBUGLOG

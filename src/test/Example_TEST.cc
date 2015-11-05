@@ -28,37 +28,52 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EVENT_H_
-#define DES_EVENT_H_
-
+#include <gtest/gtest.h>
 #include <prim/prim.h>
 
-namespace des {
+#include <cmath>
 
-class Model;
+#include <tuple>
+#include <vector>
 
-/*
- * This defines an event handler function pointer.
- */
-class Event;
-typedef void (Model::*EventHandler)(Event*);
+#include "des/des.h"
+#include "test/ExampleModel_TEST.h"
 
-/*
- * This is the base class for all events.
- */
-class Event {
- public:
-  Event();
-  Event(Model* _model, EventHandler _handler);
-  Event(Model* _model, EventHandler _handler, u64 _time, u8 _epsilon);
-  virtual ~Event();
+TEST(ExampleModel, benchmark) {
+  const u64 configs[5][2] = {
+    {1,     250000000},
+    {10,    12000000},
+    {100,   800000},
+    {1000,  50000},
+    {10000, 3200}};
 
-  Model* model;
-  EventHandler handler;
-  u64 time;
-  u8 epsilon;
-};
+  for (auto&& c : configs) {  // NOLINT
+    u64 numModels = c[0];
+    printf("number of models: %lu\n", numModels);
+    u64 eventsPerModel = c[1];
 
-}  // namespace des
+    des::Simulator* sim = new des::Simulator();
+    sim->addDebugName("Model_" + std::to_string(numModels - 1));
 
-#endif  // DES_EVENT_H_
+    des::Logger* logger = new des::Logger(sim, "Logger", nullptr);
+    sim->setLogger(logger);
+
+    std::vector<ExampleModel*> models(numModels);
+    for (u32 id = 0; id < numModels; id++) {
+      models.at(id) = new ExampleModel(sim, "Model_" + std::to_string(id),
+                                       nullptr, eventsPerModel, id);
+    }
+    for (u32 id = 0; id < numModels; id++) {
+      models.at(id)->exampleFunction(1000000, 2000000, 3000000);
+    }
+
+    sim->debugCheck();
+    sim->simulate(true);
+
+    for (u32 id = 0; id < numModels; id++) {
+      delete models.at(id);
+    }
+    delete logger;
+    delete sim;
+  }
+}

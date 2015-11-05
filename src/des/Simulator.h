@@ -33,8 +33,9 @@
 
 #include <prim/prim.h>
 
-#include <string>
+#include <atomic>
 #include <queue>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -42,11 +43,13 @@
 namespace des {
 
 class Event;
+class Executer;
 class Model;
+class Logger;
 
 class Simulator {
  public:
-  Simulator();
+  explicit Simulator(u32 _numThreads);
   ~Simulator();
 
   // events and event handling
@@ -56,6 +59,10 @@ class Simulator {
   u64 numEvents() const;
   void simulate(bool _printStatsSummary);
   void showStats();
+
+  // logging
+  Logger* getLogger() const;
+  void setLogger(Logger* _logger);
 
   // models and debugging
   void addModel(Model* _model);
@@ -71,11 +78,18 @@ class Simulator {
     bool operator()(const Event* _lhs, const Event* _rhs) const;
   };
 
+  // executers
+  std::vector<Executer*> executers_;
+  volatile std::atomic<u64> working_;  // DO I NEED VOLATILE HERE?
+
   // events and event handling
   std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
   u64 time_;
   u8 epsilon_;
   volatile bool showStats_;
+
+  // logging
+  Logger* logger_;
 
   // models and debugging
   std::unordered_map<std::string, Model*> models_;

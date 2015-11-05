@@ -37,6 +37,7 @@
 
 namespace des {
 
+class Logger;
 class Simulator;
 
 class Model {
@@ -49,29 +50,29 @@ class Model {
   virtual ~Model();
   const std::string& baseName() const;
   std::string fullName() const;
-  void setDebug(bool _debug);
 
- protected:
-  Simulator* simulator() const;
-  bool debug_;
+  Simulator* simulator;
+  bool debug;
+  u32 executer;
 
  private:
-  Simulator* simulator_;
   std::string name_;
   const Model* parent_;
 };
 
 #ifndef NDEBUGLOG
-s32 debuglogf(const char* _func, s32 _line, const char* _name,
-              u64 _time, u8 _epsilon, const char* _format, ...);
+s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
+              const char* _name, u64 _time, u8 _epsilon, const char* _format,
+              ...);
 
 #define logf(...) (                                                     \
-    (this->debug_) ?                                                    \
-    (des::debuglogf(__func__,                                           \
+    (this->debug && this->simulator->getLogger()) ?                     \
+    (des::debuglogf(this->simulator->getLogger(),                       \
+                    __func__,                                           \
                     __LINE__,                                           \
                     this->fullName().c_str(),                           \
-                    simulator()->time(),                                \
-                    simulator()->epsilon(),                             \
+                    this->simulator->time(),                            \
+                    this->simulator->epsilon(),                         \
                     __VA_ARGS__)) : (0))
 #else  // NDEBUGLOG
 
