@@ -31,6 +31,10 @@
 #ifndef DES_EXECUTER_H_
 #define DES_EXECUTER_H_
 
+#include <prim/prim.h>
+
+#include "des/SpinLock.h"
+
 namespace des {
 
 class Event;
@@ -38,8 +42,8 @@ class Simulator;
 
 class Executer {
  public:
-  explicit Executer(Simulator* _simulator);
-  virtual ~Executer();
+  Executer(Simulator* _simulator, u32 _id);
+  ~Executer();
 
   void start();
   void stop();
@@ -50,8 +54,13 @@ class Executer {
   void run();
 
   Simulator* simulator_;
+  u32 _id;
+
   volatile bool stop_;
   volatile bool running_;
+
+  std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
+  SpinLock queueLock_;
 };
 
 }  // namespace des

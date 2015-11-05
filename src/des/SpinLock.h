@@ -28,51 +28,25 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/Event.h"
+#ifndef DES_SPINLOCK_H_
+#define DES_SPINLOCK_H_
 
-#include <prim/prim.h>
-
-#include "des/Model.h"
+#include <atomic>
 
 namespace des {
 
-Event::Event()
-    : model(nullptr), handler(nullptr), time(U64_MAX), epsilon(U8_MAX) {}
+class SpinLock {
+ public:
+  SpinLock();
+  ~SpinLock();
+  void acquire();
+  bool tryAcquire();
+  void release();
 
-Event::Event(Model* _model, EventHandler _handler)
-    : model(_model), handler(_handler), time(U64_MAX), epsilon(U8_MAX) {}
-
-Event::Event(Model* _model, EventHandler _handler, u64 _time, u8 _epsilon)
-    : model(_model), handler(_handler), time(_time), epsilon(_epsilon) {}
-
-Event::~Event() {}
-
-bool timeGreater(u64 _time1, u8 _epsilon1, u64 _time2, u8 _epsilon2) {
-  if (_time1 == _time2) {
-    return _epsilon1 > _epsilon2;
-  } else {
-    return _time1 > _time2;
-  }
-}
-
-s32 timeCompare(u64 _time1, u8 _epsilon1, u64 _time2, u8 _epsilon2) {
-  if (_time1 == _time2) {
-    if (_epsilon1 == _epsilon2) {
-      return 0;
-    } else if (_epsilon1 > _epsilon2) {
-      return 1;
-    } else {
-      return -1;
-    }
-  } else if (_time1 > _time2) {
-    return 1;
-  } else {
-    return -1;
-  }
-}
-
-bool EventComparator::operator()(const Event* _lhs, const Event* _rhs) const {
-  return timeGreater(_lhs->time, _lhs->epsilon, _rhs->time, _rhs->epsilon);
-}
+ private:
+  std::atomic_flag lock_;
+};
 
 }  // namespace des
+
+#endif  // DES_SPINLOCK_H_

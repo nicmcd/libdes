@@ -37,15 +37,11 @@ namespace des {
 
 class Model;
 
-/*
- * This defines an event handler function pointer.
- */
+// This defines an event handler function pointer.
 class Event;
 typedef void (Model::*EventHandler)(Event*);
 
-/*
- * This is the base class for all events.
- */
+// This is the base class for all events.
 class Event {
  public:
   Event();
@@ -57,6 +53,20 @@ class Event {
   EventHandler handler;
   u64 time;
   u8 epsilon;
+};
+
+// This defines a function for comparing two compound time values.
+//  This returns true if 1>2
+bool timeGreater(u64 _time1, u8 _epsilon1, u64 _time2, u8 _epsilon2);
+
+// This defines a function for comparing two compound time values.
+//  This returns 0 when equal, 1 when 1>2, -1 when 1<2
+s32 timeCompare(u64 _time1, u8 _epsilon1, u64 _time2, u8 _epsilon2);
+
+// This defines a comparator object for comparing events.
+class EventComparator {
+ public:
+  bool operator()(const Event* _lhs, const Event* _rhs) const;
 };
 
 }  // namespace des

@@ -42,8 +42,8 @@
 
 namespace des {
 
-Executer::Executer(Simulator* _simulator)
-    : simulator_(_simulator), stop_(false), running_(false) {}
+Executer::Executer(Simulator* _simulator, u32 _id)
+    : simulator_(_simulator), id_(_id), stop_(false), running_(false) {}
 
 Executer::~Executer() {}
 
@@ -67,8 +67,9 @@ bool Executer::running() const {
 }
 
 void Executer::addEvent(Event* _event) {
-  u64 tid = std::hash<std::thread::id>(std::this_thread::get_id());
-  printf("%lu adding event\n", tid);
+  queueLock_.acquire();
+  queue_.push(_event);
+  queueLock_.release();
 }
 
 void Executer::run() {
@@ -76,6 +77,12 @@ void Executer::run() {
   running_ = true;
 
   printf("%lu running\n", std::this_thread::get_id().hash());
+
+  while (!stop) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  }
+
+  printf("%lu stopping\n", std::this_thread::get_id().hash());
 
   running_ = false;
 }

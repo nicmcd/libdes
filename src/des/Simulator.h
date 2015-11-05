@@ -40,6 +40,8 @@
 #include <unordered_set>
 #include <vector>
 
+#include "des/SpinLock.h"
+
 namespace des {
 
 class Event;
@@ -73,22 +75,17 @@ class Simulator {
   void debugCheck();
 
  private:
-  class EventComparator {
-   public:
-    bool operator()(const Event* _lhs, const Event* _rhs) const;
-  };
-
-  // executers
   std::vector<Executer*> executers_;
   volatile std::atomic<u64> working_;  // DO I NEED VOLATILE HERE?
 
-  // events and event handling
-  std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
+  // following variables handle time
   u64 time_;
   u8 epsilon_;
+
+  // this is used to tell the simulation thread to print current stats
   volatile bool showStats_;
 
-  // logging
+  // this is a logger for the entire simulation framework
   Logger* logger_;
 
   // models and debugging
