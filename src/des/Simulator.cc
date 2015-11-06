@@ -46,11 +46,25 @@
 namespace des {
 
 Simulator::Simulator()
-    : Simulator(std::thread::hardware_concurrency()) {}
+    : Simulator(0) {}
 
 Simulator::Simulator(u32 _numThreads)
     : time_(0, 0), logger_(nullptr) {
-  assert(_numThreads > 0 && _numThreads <= 64);
+  if (_numThreads == 0) {
+    _numThreads = std::thread::hardware_concurrency() - 1;
+    if (_numThreads == 0) {
+      _numThreads = 1;
+    }
+  }
+
+  if (_numThreads + 1 > std::thread::hardware_concurrency()) {
+    printf("*************************************************************\n"
+           "* WARNING WARNING WARNING WARNING WARNING WARNING WARNING   *\n"
+           "* The simulator will have terrible performance if there are *\n"
+           "* more execution threads than the hardware supports.        *\n"
+           "*************************************************************\n");
+  }
+
   executers_.resize(_numThreads);
   for (u32 id = 0; id < _numThreads; id++) {
     std::get<0>(executers_.at(id)) = new Executer(this, id);
@@ -138,7 +152,7 @@ void Simulator::simulate() {
   for (auto e : executers_) {
     Executer* exe = std::get<0>(e);
     while (exe->running()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      // std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 }

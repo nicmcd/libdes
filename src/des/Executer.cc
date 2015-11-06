@@ -101,7 +101,7 @@ void Executer::run() {
   // running FSM
   assert(!running_);
   running_ = true;
-  printf("Executer %u running\n", id_);
+  // printf("Executer %u running\n", id_);
 
   // loop forever (until 'stop' command is given)
   while (true) {
@@ -148,12 +148,12 @@ void Executer::run() {
     if (stop_) {
       break;
     } else {
-      std::this_thread::sleep_for(std::chrono::microseconds(1));
+      // std::this_thread::sleep_for(std::chrono::microseconds(1));
     }
   }
 
   // running FSM
-  printf("Executer %u stopping\n", id_);
+  // printf("Executer %u stopping\n", id_);
   running_ = false;
   stop_ = false;
 }
