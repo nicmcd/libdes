@@ -96,6 +96,15 @@ void Simulator::simulate() {
     exe->start();
   }
 
+  // statistics tracking
+  u64 totalEvents = 0;
+  u64 intervalEvents = 0;
+  Time lastSimTime = 0;
+  std::chrono::steady_clock::time_point startTime =
+      std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point lastRealTime = startTime;
+  std::chrono::duration<f64> sum(0);
+
   // loop forever (until there are no more events in any executer queue)
   while (true) {
     // find the event next time (also get other stats needed)

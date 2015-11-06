@@ -62,7 +62,7 @@ void ExampleModel::exampleFunctionHandler(des::Event* _event) {
 
   count_--;
   if (verbose_ || count_ < 5) {
-    logf("hello world, from model #%lu, count %lu", id_, count_);
+    //logf("hello world, from model #%lu, count %lu", id_, count_);
   }
 
   if (count_ > 0) {
