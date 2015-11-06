@@ -39,6 +39,35 @@
 #include "des/des.h"
 #include "test/ExampleModel_TEST.h"
 
+TEST(ExampleModel, simple) {
+  u32 numThreads = 1;
+  u64 numModels = 2000;
+  printf("number of models: %lu\n", numModels);
+  u64 eventsPerModel = 10000;
+
+  des::Simulator* sim = new des::Simulator(numThreads);
+  for (u32 id = 0; id < 1/*numModels*/; id++) {
+    sim->addDebugName("Model_" + std::to_string(id));
+  }
+
+  std::vector<ExampleModel*> models(numModels);
+  for (u32 id = 0; id < numModels; id++) {
+    models.at(id) = new ExampleModel(sim, "Model_" + std::to_string(id),
+                                     nullptr, eventsPerModel, id, false);
+  }
+  for (u32 id = 0; id < numModels; id++) {
+    models.at(id)->exampleFunction(1000000, 2000000, 3000000);
+  }
+
+  sim->debugCheck();
+  sim->simulate();
+
+  for (u32 id = 0; id < numModels; id++) {
+    delete models.at(id);
+  }
+  delete sim;
+}
+
 TEST(ExampleModel, benchmark) {
   const u64 configs[5][2] = {
     {1,     250000000},
@@ -55,25 +84,21 @@ TEST(ExampleModel, benchmark) {
     des::Simulator* sim = new des::Simulator();
     sim->addDebugName("Model_" + std::to_string(numModels - 1));
 
-    des::Logger* logger = new des::Logger(sim, "Logger", nullptr);
-    sim->setLogger(logger);
-
     std::vector<ExampleModel*> models(numModels);
     for (u32 id = 0; id < numModels; id++) {
       models.at(id) = new ExampleModel(sim, "Model_" + std::to_string(id),
-                                       nullptr, eventsPerModel, id);
+                                       nullptr, eventsPerModel, id, false);
     }
     for (u32 id = 0; id < numModels; id++) {
       models.at(id)->exampleFunction(1000000, 2000000, 3000000);
     }
 
     sim->debugCheck();
-    sim->simulate(true);
+    sim->simulate();
 
     for (u32 id = 0; id < numModels; id++) {
       delete models.at(id);
     }
-    delete logger;
     delete sim;
   }
 }

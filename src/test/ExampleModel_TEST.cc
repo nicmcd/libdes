@@ -35,9 +35,10 @@
 #include <cstring>
 
 ExampleModel::ExampleModel(des::Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, u64 _count, u64 _id)
+                           const Model* _parent, u64 _count, u64 _id,
+                           bool _verbose)
     : des::Model(_simulator, _name, _parent), count_(_count),
-      id_(_id), evt_(this, static_cast<des::EventHandler>(
+      id_(_id), verbose_(_verbose), evt_(this, static_cast<des::EventHandler>(
           &ExampleModel::exampleFunctionHandler)) {}
 
 ExampleModel::~ExampleModel() {}
@@ -47,19 +48,20 @@ ExampleModel::ExampleEvent::ExampleEvent(des::Model* _model,
     : des::Event(_model, _handler), a(0), b(0), c(0) {}
 
 void ExampleModel::exampleFunction(s32 _a, s32 _b, s32 _c) {
-  evt_.time = simulator()->time() + 1;
-  evt_.epsilon = count_ % U8_MAX;
+  evt_.time = simulator->time();
+  evt_.time.tick++;
+  evt_.time.epsilon = count_ % 254;
   evt_.a = _a;
   evt_.b = _b;
   evt_.c = _c;
-  simulator()->addEvent(&evt_);
+  simulator->addEvent(&evt_);
 }
 
 void ExampleModel::exampleFunctionHandler(des::Event* _event) {
   ExampleEvent* me = dynamic_cast<ExampleEvent*>(_event);
 
   count_--;
-  if (count_ < 5) {
+  if (verbose_ || count_ < 5) {
     logf("hello world, from model #%lu, count %lu", id_, count_);
   }
 

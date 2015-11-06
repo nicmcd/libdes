@@ -39,9 +39,9 @@ class SpinLock {
  public:
   SpinLock();
   ~SpinLock();
-  void acquire();
-  bool tryAcquire();
-  void release();
+  void lock();
+  bool tryLock();
+  void unlock();
 
  private:
   std::atomic_flag lock_;

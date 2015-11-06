@@ -45,49 +45,106 @@
 
 namespace des {
 
+Simulator::Simulator()
+    : Simulator(std::thread::hardware_concurrency()) {}
+
 Simulator::Simulator(u32 _numThreads)
-    : time_(0), epsilon_(0), showStats_(false), logger_(nullptr) {
-  u32 hwThreads = _numThreads;
-  if (hwThreads == 0) {
-    hwThreads = std::thread::hardware_concurrency();
+    : time_(0, 0), logger_(nullptr) {
+  assert(_numThreads > 0 && _numThreads <= 64);
+  executers_.resize(_numThreads);
+  for (u32 id = 0; id < _numThreads; id++) {
+    std::get<0>(executers_.at(id)) = new Executer(this, id);
   }
-  assert(hwThreads > 0);
-  assert(hwThreads <= 64);
-  executers_.resize(hwThreads, NULL);
-  for (auto& e : executers_) {
-    e = new Executer(this);
-  }
-  working_ = 0;
+  logger_ = new Logger();
 }
 
 Simulator::~Simulator() {
   for (auto& e : executers_) {
-    delete e;
+    delete std::get<0>(e);
   }
+  delete logger_;
 }
 
-u64 Simulator::time() const {
+Time Simulator::time() const {
   return time_;
 }
 
-u8 Simulator::epsilon() const {
-  return epsilon_;
-}
-
 void Simulator::addEvent(Event* _event) {
-  assert((_event->time == time_) ?
-         (_event->epsilon > epsilon_) :
-         (_event->time > time_));
+  assert(_event->time >= time_);
   u32 exe = _event->model->executer;
-  working_.fetch_or(1 << exe);
-  executers_.at(exe)->addEvent(_event);
+  std::get<0>(executers_.at(exe))->addEvent(_event);
 }
 
-u64 Simulator::numEvents() const {
-  return queue_.size();
+void Simulator::simulate() {
+  // start all executers
+  for (auto e : executers_) {
+    Executer* exe = std::get<0>(e);
+    exe->start();
+  }
+
+  // loop forever (until there are no more events in any executer queue)
+  while (true) {
+    // find the event next time (also get other stats needed)
+    Time nextTime = Time();
+    u64 eventCount = 0;
+    for (auto& e : executers_) {
+      // gather queue stats from executer
+      Executer* exe = std::get<0>(e);
+      Executer::QueueStats& qs = std::get<1>(e);
+      qs = exe->queueStats();
+
+      // minimize next event time
+      if (qs.size > 0) {
+        eventCount = qs.size;
+        if (qs.nextTime < nextTime) {
+          nextTime = qs.nextTime;
+        }
+      }
+    }
+
+    // determine if simulation is complete (no more events)
+    if (eventCount == 0) {
+      break;
+    }
+
+    // update the time
+    time_ = nextTime;
+
+    // turn on executers with events for this time
+    for (auto& e : executers_) {
+      Executer* exe = std::get<0>(e);
+      Executer::QueueStats& qs = std::get<1>(e);
+      if (qs.nextTime == nextTime) {
+        exe->execute();
+      }
+    }
+
+    // wait for all executers to finish
+    for (auto& e : executers_) {
+      Executer* exe = std::get<0>(e);
+      while (exe->executing()) {
+        std::this_thread::sleep_for(std::chrono::microseconds(1));
+      }
+    }
+  }
+
+  // give executers stop command
+  for (auto e : executers_) {
+    Executer* exe = std::get<0>(e);
+    exe->stop();
+  }
+
+  // wait for all executers to finish
+  for (auto e : executers_) {
+    Executer* exe = std::get<0>(e);
+    while (exe->running()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+  }
 }
 
-void Simulator::simulate(bool _printStatsSummary) {
+
+  /*
   // all these variables are used for statistics gathering and printing
   u64 totalEvents = 0;
   u64 intervalEvents = 0;
@@ -161,18 +218,10 @@ void Simulator::simulate(bool _printStatsSummary) {
            totalEvents, time_, runTime, totalEvents / runTime,
            totalEvents / static_cast<f64>(time_), time_ / runTime);
   }
-}
-
-void Simulator::showStats() {
-  showStats_ = true;
-}
+  */
 
 Logger* Simulator::getLogger() const {
   return logger_;
-}
-
-void Simulator::setLogger(Logger* _logger) {
-  logger_ = _logger;
 }
 
 void Simulator::addModel(Model* _model) {
@@ -199,6 +248,7 @@ Model* Simulator::getModel(const std::string& _fullName) const {
 }
 
 void Simulator::removeModel(const std::string& _fullName) {
+  models_.at(_fullName)->executer = U32_MAX;
   u64 res = models_.erase(_fullName);
   (void)res;
   assert(res == 1);
@@ -221,15 +271,6 @@ void Simulator::debugCheck() {
   }
   assert(toBeDebugged_.size() == 0);
   toBeDebugged_.reserve(0);
-}
-
-bool Simulator::EventComparator::operator()(
-    const Event* _lhs,
-    const Event* _rhs) const {
-  if (_lhs->time == _rhs->time) {
-    return _lhs->epsilon > _rhs->epsilon;
-  }
-  return _lhs->time > _rhs->time;
 }
 
 }  // namespace des

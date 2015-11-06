@@ -36,15 +36,15 @@ SpinLock::SpinLock() : lock_(ATOMIC_FLAG_INIT) {}
 
 SpinLock::~SpinLock() {}
 
-void SpinLock::acquire() {
+void SpinLock::lock() {
   while (lock_.test_and_set(std::memory_order_acquire)) {}  // spin
 }
 
-bool SpinLock::tryAcquire() {
+bool SpinLock::tryLock() {
   return !lock_.test_and_set(std::memory_order_acquire);
 }
 
-void SpinLock::release() {
+void SpinLock::unlock() {
   lock_.clear(std::memory_order_release);
 }
 

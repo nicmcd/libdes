@@ -40,7 +40,7 @@
 class ExampleModel : public des::Model {
  public:
   ExampleModel(des::Simulator* _simulator, const std::string& _name,
-               const Model* _parent, u64 _count, u64 _id);
+               const Model* _parent, u64 _count, u64 _id, bool _verbose);
   ~ExampleModel();
   void exampleFunction(s32 _a, s32 _b, s32 _c);
 
@@ -57,6 +57,7 @@ class ExampleModel : public des::Model {
 
   u64 count_;
   u64 id_;
+  bool verbose_;
   ExampleEvent evt_;
 };
 

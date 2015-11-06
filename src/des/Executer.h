@@ -33,15 +33,23 @@
 
 #include <prim/prim.h>
 
+#include <queue>
+#include <vector>
+
+#include "des/Event.h"
 #include "des/SpinLock.h"
 
 namespace des {
 
-class Event;
 class Simulator;
 
 class Executer {
  public:
+  struct QueueStats {
+    u64 size;
+    Time nextTime;
+  };
+
   Executer(Simulator* _simulator, u32 _id);
   ~Executer();
 
@@ -49,15 +57,19 @@ class Executer {
   void stop();
   bool running() const;
   void addEvent(Event* _event);
+  QueueStats queueStats();
+  void execute();
+  bool executing();
 
  private:
   void run();
 
   Simulator* simulator_;
-  u32 _id;
+  u32 id_;
 
   volatile bool stop_;
   volatile bool running_;
+  volatile bool executing_;
 
   std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
   SpinLock queueLock_;

@@ -28,63 +28,59 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_SIMULATOR_H_
-#define DES_SIMULATOR_H_
+#ifndef DES_TIME_H_
+#define DES_TIME_H_
 
 #include <prim/prim.h>
 
-#include <atomic>
 #include <string>
-#include <tuple>
-#include <unordered_map>
-#include <unordered_set>
-#include <vector>
-
-#include "des/Executer.h"
-#include "des/Time.h"
 
 namespace des {
 
-class Event;
-class Model;
-class Logger;
+// these define the size and bounds of time fields
+typedef u64 Tick;
+static const Tick TICK_INV = U64_MAX;
+typedef u8 Epsilon;
+static const Epsilon EPSILON_INV = U8_MAX;
 
-class Simulator {
+// this class handles the bulk of time operations
+class Time {
  public:
-  Simulator();
-  explicit Simulator(u32 _numThreads);
-  ~Simulator();
+  // initializes time as invalid
+  Time();
 
-  // events and event handling
-  Time time() const;
-  void addEvent(Event* _event);
-  void simulate();
+  // initializes tick as specified, epsilon to zero
+  explicit Time(Tick _tick);
 
-  // logging
-  Logger* getLogger() const;
+  // initializes tick as specified, epsilon as specified
+  Time(Tick _tick, Epsilon _epsilon);
 
-  // models and debugging
-  void addModel(Model* _model);
-  Model* getModel(const std::string& _fullName) const;
-  void removeModel(const std::string& _fullName);
-  u64 numModels() const;
-  void addDebugName(const std::string& _fullName);
-  void debugCheck();
+  // copy constructor
+  Time(const Time& _o);
 
- private:
-  std::vector<std::tuple<Executer*, Executer::QueueStats> > executers_;
+  // assignment operator
+  Time& operator=(const Time& o);
 
-  // following variable holds the simulator's time
-  Time time_;
+  // comparison operators
+  bool operator==(const Time& _o) const;
+  bool operator!=(const Time& _o) const;
+  bool operator<(const Time& _o) const;
+  bool operator>(const Time& _o) const;
+  bool operator<=(const Time& _o) const;
+  bool operator>=(const Time& _o) const;
+  s32 compare(const Time& _o) const;
 
-  // this is a logger for the entire simulation framework
-  Logger* logger_;
+  // helper min/max functions
+  static Time min(const Time& a, const Time& b);  // NOLINT
+  static Time max(const Time& a, const Time& b);  // NOLINT
 
-  // models and debugging
-  std::unordered_map<std::string, Model*> models_;
-  std::unordered_set<std::string> toBeDebugged_;
+  // misc helper functions
+  std::string toString() const;
+
+  Tick tick;
+  Epsilon epsilon;
 };
 
 }  // namespace des
 
-#endif  // DES_SIMULATOR_H_
+#endif  // DES_TIME_H_

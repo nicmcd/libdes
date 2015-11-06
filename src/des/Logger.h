@@ -31,29 +31,18 @@
 #ifndef DES_LOGGER_H_
 #define DES_LOGGER_H_
 
-#include <string>
-
-#include "des/Event.h"
-#include "des/Model.h"
+#include <mutex>
 
 namespace des {
 
-class Logger : public des::Model {
+class Logger {
  public:
-  Logger(des::Simulator* _simulator, const std::string& _name,
-         const Model* _parent);
-  virtual ~Logger();
+  Logger();
+  ~Logger();
   void log(char* _message);
 
  private:
-  class LogEvent : public des::Event {
-   public:
-    LogEvent(des::Model* _model, des::EventHandler _handler,
-             u64 _time, u8 _epsilon, char* _message);
-    char* message;
-  };
-
-  void logHandler(des::Event* _event);
+  std::mutex lock;
 };
 
 }  // namespace des

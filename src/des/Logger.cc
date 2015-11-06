@@ -30,34 +30,16 @@
  */
 #include "des/Logger.h"
 
-#include "des/Simulator.h"
-
 namespace des {
 
-Logger::Logger(des::Simulator* _simulator, const std::string& _name,
-               const Model* _parent)
-    : des::Model(_simulator, _name, _parent) {}
+Logger::Logger() {}
 
 Logger::~Logger() {}
 
 void Logger::log(char* _message) {
-  des::EventHandler handler = static_cast<des::EventHandler>(
-      &Logger::logHandler);
-  simulator()->addEvent(new LogEvent(this, handler,
-                                     simulator()->time(),
-                                     simulator()->epsilon() + 1,
-                                     _message));
-}
-
-Logger::LogEvent::LogEvent(des::Model* _model, des::EventHandler _handler,
-                           u64 _time, u8 _epsilon, char* _message)
-    : des::Event(_model, _handler, _time, _epsilon), message(_message) {}
-
-void Logger::logHandler(des::Event* _event) {
-  LogEvent* evt = reinterpret_cast<LogEvent*>(_event);
-  printf("%s", evt->message);
-  delete[] evt->message;
-  delete evt;
+  lock.lock();
+  printf("%s", _message);
+  lock.unlock();
 }
 
 }  // namespace des

@@ -37,13 +37,13 @@
 #include <chrono>
 #include <thread>
 
-#include "des/Event.h"
 #include "des/Simulator.h"
 
 namespace des {
 
 Executer::Executer(Simulator* _simulator, u32 _id)
-    : simulator_(_simulator), id_(_id), stop_(false), running_(false) {}
+    : simulator_(_simulator), id_(_id),
+      stop_(false), running_(false), executing_(false) {}
 
 Executer::~Executer() {}
 
@@ -51,15 +51,12 @@ void Executer::start() {
   stop_ = false;
   if (!running_) {
     std::thread thread(&Executer::run, this);
+    thread.detach();
   }
 }
 
 void Executer::stop() {
   stop_ = true;
-  while (running_) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  }
-  stop_ = false;
 }
 
 bool Executer::running() const {
@@ -67,24 +64,98 @@ bool Executer::running() const {
 }
 
 void Executer::addEvent(Event* _event) {
-  queueLock_.acquire();
+  queueLock_.lock();
   queue_.push(_event);
-  queueLock_.release();
+  queueLock_.unlock();
+}
+
+Executer::QueueStats Executer::queueStats() {
+  Executer::QueueStats qs;
+  Event* event = nullptr;
+  qs.nextTime = Time();   ////////////////////// this is already the case?
+
+  queueLock_.lock();
+  qs.size = queue_.size();
+  if (qs.size > 0) {
+    event = queue_.top();
+  }
+  queueLock_.unlock();
+
+  if (event != nullptr) {
+    qs.nextTime = event->time;
+  }
+
+  return qs;
+}
+
+void Executer::execute() {
+  assert(!executing_);
+  executing_ = true;
+}
+
+bool Executer::executing() {
+  return executing_;
 }
 
 void Executer::run() {
+  // running FSM
   assert(!running_);
   running_ = true;
+  printf("Executer %u running\n", id_);
 
-  printf("%lu running\n", std::this_thread::get_id().hash());
+  // loop forever (until 'stop' command is given)
+  while (true) {
+    // determine if we are allowed to execute
+    if (executing_) {
+      // get a current snapshot of time
+      Time time = simulator_->time();
 
-  while (!stop) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      // loop until all events up to the current time have been executed
+      // printf("%u now executing at %s\n", id_, time.toString().c_str());
+      while (true) {
+        Event* event = nullptr;
+
+        // peek at the next event
+        queueLock_.lock();
+        if (!queue_.empty()) {
+          event = queue_.top();
+        }
+        queueLock_.unlock();
+
+        // determine if this time step is complete
+        if ((event == nullptr) || (event->time > time)) {
+          // printf("%u done for now\n", id_);
+          executing_ = false;
+          break;
+        }
+
+        // get the next event, which is now guaranteed to be in this time step
+        queueLock_.lock();
+        event = queue_.top();
+        queue_.pop();
+        queueLock_.unlock();
+        assert(event->time == time);
+
+        // execute the event
+        // printf("%u executing event at %s\n", id_, time.toString().c_str());
+        Model* model = event->model;
+        EventHandler handler = event->handler;
+        (model->*handler)(event);
+      }
+    }
+
+    // determine if stop command has been given
+    if (stop_) {
+      break;
+    } else {
+      std::this_thread::sleep_for(std::chrono::microseconds(1));
+    }
   }
 
-  printf("%lu stopping\n", std::this_thread::get_id().hash());
-
+  // running FSM
+  printf("Executer %u stopping\n", id_);
   running_ = false;
+  stop_ = false;
 }
 
 }  // namespace des

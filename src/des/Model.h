@@ -35,6 +35,8 @@
 
 #include <string>
 
+#include "des/Time.h"
+
 namespace des {
 
 class Logger;
@@ -62,8 +64,7 @@ class Model {
 
 #ifndef NDEBUGLOG
 s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
-              const char* _name, u64 _time, u8 _epsilon, const char* _format,
-              ...);
+              const char* _name, const Time& _time, const char* _format, ...);
 
 #define logf(...) (                                                     \
     (this->debug && this->simulator->getLogger()) ?                     \
@@ -72,7 +73,6 @@ s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
                     __LINE__,                                           \
                     this->fullName().c_str(),                           \
                     this->simulator->time(),                            \
-                    this->simulator->epsilon(),                         \
                     __VA_ARGS__)) : (0))
 #else  // NDEBUGLOG
 

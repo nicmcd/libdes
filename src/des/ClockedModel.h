@@ -45,18 +45,18 @@ class ClockedModel : public Model {
  public:
   ClockedModel(const std::string& _name, const ClockedModel* _parent);
   ClockedModel(const std::string& _name, const ClockedModel* _parent,
-               u64 _cyclePeriod, u64 _cyclePhase);
+               Tick _cyclePeriod, Tick _cyclePhase);
   ClockedModel(Simulator* _simulator, const std::string& _name,
-               const Model* _parent, u64 _cyclePeriod, u64 _cyclePhase);
+               const Model* _parent, Tick _cyclePeriod, Tick _cyclePhase);
   virtual ~ClockedModel();
 
-  u64 cyclePeriod() const;
-  u64 cyclePhase() const;
-  u64 futureCycle(u32 _cycles) const;
+  Tick cyclePeriod() const;
+  Tick cyclePhase() const;
+  Tick futureCycle(u32 _cycles) const;
 
  private:
-  u64 cyclePeriod_;
-  u64 cyclePhase_;
+  Tick cyclePeriod_;
+  Tick cyclePhase_;
 };
 
 }  // namespace des

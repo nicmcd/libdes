@@ -43,8 +43,8 @@ Model::Model(const std::string& _name, const Model* _parent)
 
 Model::Model(Simulator* _simulator, const std::string& _name,
              const Model* _parent)
-    : simulator(_simulator), debug(false), name_(_name),
-      parent_(_parent) {
+    : simulator(_simulator), debug(false), executer(U32_MAX),
+      name_(_name), parent_(_parent) {
   simulator->addModel(this);
 }
 
@@ -69,8 +69,7 @@ std::string Model::fullName() const {
 
 #ifndef NDEBUGLOG
 s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
-              const char* _name, u64 _time, u8 _epsilon, const char* _format,
-              ...) {
+              const char* _name, const Time& _time, const char* _format, ...) {
   // create a buffer to create the string in
   s32 budget = 2000;
   char* buf = new char[budget];
@@ -78,8 +77,8 @@ s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
   s32 res;
 
   // format the line header
-  res = snprintf(ptr, budget, "[%lu:%u] %s:%s:%i | ",
-                 _time, (u32)_epsilon, _name, _func, _line);
+  res = snprintf(ptr, budget, "[%s] %s:%s:%i | ", _time.toString().c_str(),
+                 _name, _func, _line);
   assert((res > 0) && (res < budget));
   ptr += res;
   budget -= res;
@@ -100,6 +99,9 @@ s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
 
   // give string to logger to print
   _logger->log(buf);
+
+  // delete the buffer and return succesfully
+  delete[] buf;
   return 0;
 }
 #endif  // NDEBUGLOG

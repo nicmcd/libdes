@@ -31,7 +31,7 @@
 #ifndef DES_EVENT_H_
 #define DES_EVENT_H_
 
-#include <prim/prim.h>
+#include "des/Time.h"
 
 namespace des {
 
@@ -46,22 +46,13 @@ class Event {
  public:
   Event();
   Event(Model* _model, EventHandler _handler);
-  Event(Model* _model, EventHandler _handler, u64 _time, u8 _epsilon);
+  Event(Model* _model, EventHandler _handler, Time _time);
   virtual ~Event();
 
   Model* model;
   EventHandler handler;
-  u64 time;
-  u8 epsilon;
+  Time time;
 };
-
-// This defines a function for comparing two compound time values.
-//  This returns true if 1>2
-bool timeGreater(u64 _time1, u8 _epsilon1, u64 _time2, u8 _epsilon2);
-
-// This defines a function for comparing two compound time values.
-//  This returns 0 when equal, 1 when 1>2, -1 when 1<2
-s32 timeCompare(u64 _time1, u8 _epsilon1, u64 _time2, u8 _epsilon2);
 
 // This defines a comparator object for comparing events.
 class EventComparator {

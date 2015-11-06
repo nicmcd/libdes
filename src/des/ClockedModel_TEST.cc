@@ -38,13 +38,12 @@ class SetTimeModel : public des::Model {
       : des::Model(_simulator, "settime", nullptr),
         event_(this, static_cast<des::EventHandler>(
             &SetTimeModel::ignoreEvent)) {
-    setDebug(true);
+    debug = true;
   }
 
-  void setEvent(u64 _time, u64 _epsilon) {
+  void setEvent(des::Time _time) {
     event_.time = _time;
-    event_.epsilon = _epsilon;
-    simulator()->addEvent(&event_);
+    simulator->addEvent(&event_);
   }
 
   void ignoreEvent(des::Event* _event) {
@@ -55,13 +54,14 @@ class SetTimeModel : public des::Model {
     des::Event event_;
 };
 
-u64 slowFutureCycle(u64 _now, u64 _period, u64 _phase, u64 _cycles) {
-  u64 time = _now + 1;
-  while (time % _period != _phase) {
-    time++;
+u64 slowFutureCycle(des::Tick _now, des::Tick _period, des::Tick _phase,
+                    u64 _cycles) {
+  des::Tick tick = _now + 1;
+  while (tick % _period != _phase) {
+    tick++;
   }
-  time += (_period * (_cycles - 1));
-  return time;
+  tick += (_period * (_cycles - 1));
+  return tick;
 }
 
 TEST(ClockedModel, futureCycle) {
@@ -88,18 +88,18 @@ TEST(ClockedModel, futureCycle) {
   ASSERT_EQ(c.cyclePhase(), 500u);
 
   for (u64 cnt = 0; cnt < 10000; cnt++) {
-    u64 now = sim.time();
+    des::Tick now = sim.time().tick;
     for (u64 cyc = 1; cyc < 5; cyc++) {
       for (u64 idx = 0; idx < m.size(); idx++) {
         des::ClockedModel* cm = m.at(idx);
-        u64 period = cm->cyclePeriod();
-        u64 phase = cm->cyclePhase();
-        u64 cmfc = cm->futureCycle(cyc);
-        u64 sfc = slowFutureCycle(now, period, phase, cyc);
+        des::Tick period = cm->cyclePeriod();
+        des::Tick phase = cm->cyclePhase();
+        des::Tick cmfc = cm->futureCycle(cyc);
+        des::Tick sfc = slowFutureCycle(now, period, phase, cyc);
         ASSERT_EQ(cmfc, sfc);
       }
     }
-    t.setEvent(now+1, 21);
-    sim.simulate(false);
+    t.setEvent(des::Time(now + 1, 21));
+    sim.simulate();
   }
 }

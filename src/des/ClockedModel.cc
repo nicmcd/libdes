@@ -42,14 +42,14 @@ ClockedModel::ClockedModel(const std::string& _name,
                    _parent->cyclePhase_) {}
 
 ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent, u64 _cyclePeriod,
-                           u64 _cyclePhase)
+                           const ClockedModel* _parent, Tick _cyclePeriod,
+                           Tick _cyclePhase)
     : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
                    _cyclePhase) {}
 
 ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, u64 _cyclePeriod,
-                           u64 _cyclePhase)
+                           const Model* _parent, Tick _cyclePeriod,
+                           Tick _cyclePhase)
     : Model(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
       cyclePhase_(_cyclePhase) {
   assert(cyclePhase_ < cyclePeriod_);
@@ -57,26 +57,26 @@ ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
 
 ClockedModel::~ClockedModel() {}
 
-u64 ClockedModel::cyclePeriod() const {
+Tick ClockedModel::cyclePeriod() const {
   return cyclePeriod_;
 }
 
-u64 ClockedModel::cyclePhase() const {
+Tick ClockedModel::cyclePhase() const {
   return cyclePhase_;
 }
 
-u64 ClockedModel::futureCycle(u32 _cycles) const {
+Tick ClockedModel::futureCycle(u32 _cycles) const {
   assert(_cycles > 0);
-  u64 time = simulator->time();
-  u64 rem = time % cyclePeriod_;
+  Tick tick = simulator->time().tick;
+  Tick rem = tick % cyclePeriod_;
   if (rem != cyclePhase_) {
-    time += (cyclePhase_ - rem);
+    tick += (cyclePhase_ - rem);
     if (rem > cyclePhase_) {
-      time += cyclePeriod_;
+      tick += cyclePeriod_;
     }
     _cycles--;
   }
-  return time + (cyclePeriod_ * _cycles);
+  return tick + (cyclePeriod_ * _cycles);
 }
 
 }  // namespace des
