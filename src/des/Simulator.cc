@@ -178,6 +178,7 @@ void Simulator::simulate() {
     for (auto& e : executers_) {
       Executer* exe = std::get<0>(e);
       while (exe->executing()) {
+        // TODO(nic): I don't know why, but this increases performance ?!?!?
         std::this_thread::sleep_for(std::chrono::microseconds(1));
       }
     }
@@ -215,7 +216,7 @@ void Simulator::simulate() {
   for (auto e : executers_) {
     Executer* exe = std::get<0>(e);
     while (exe->running()) {
-      // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
 }
