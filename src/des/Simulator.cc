@@ -97,7 +97,8 @@ void Simulator::simulate() {
   }
 
   // statistics tracking
-  u64 totalEvents = 0;
+  u64 currEventCount = 0;
+  u64 prevEventCount = 0;
   u64 intervalEvents = 0;
   Tick lastSimTicks = 0;
   std::chrono::steady_clock::time_point startTime =
@@ -108,17 +109,19 @@ void Simulator::simulate() {
   // loop forever (until there are no more events in any executer queue)
   while (true) {
     // find the event next time (also get other stats needed)
+    currEventCount = 0;
     Time nextTime = Time();
-    u64 eventCount = 0;
+    bool more = false;
     for (auto& e : executers_) {
       // gather queue stats from executer
       Executer* exe = std::get<0>(e);
       Executer::QueueStats& qs = std::get<1>(e);
       qs = exe->queueStats();
+      currEventCount += exe->executed();
 
       // minimize next event time
       if (qs.size > 0) {
-        eventCount = qs.size;
+        more = true;
         if (qs.nextTime < nextTime) {
           nextTime = qs.nextTime;
         }
@@ -126,11 +129,11 @@ void Simulator::simulate() {
     }
 
     // update the statistics
-    totalEvents += eventCount;
-    intervalEvents += eventCount;
+    u64 deltaEventCount = currEventCount - prevEventCount;
+    intervalEvents += deltaEventCount;
 
     // determine if simulation is complete (no more events)
-    if (eventCount == 0) {
+    if (!more) {
       break;
     }
 
@@ -160,7 +163,7 @@ void Simulator::simulate() {
 
       printf("%11lu events : %12lu ticks : %10.0f events/sec "
              ": %4.2f events/tick : %8.0f ticks/sec\n",
-             totalEvents,
+             currEventCount,
              time_.tick,
              intervalEvents / elapsedRealTime,
              intervalEvents / static_cast<f64>(elapsedSimTicks),
@@ -204,8 +207,8 @@ void Simulator::simulate() {
            "Events per sim units:       %.3f\n"
            "Sim units per real seconds: %.3f\n"
            "\n",
-           totalEvents, time_.tick, runTime, totalEvents / runTime,
-           totalEvents / static_cast<f64>(time_.tick), time_.tick / runTime);
+           currEventCount, time_.tick, runTime, currEventCount / runTime,
+           currEventCount / static_cast<f64>(time_.tick), time_.tick / runTime);
   }
 
   // wait for all executers to finish

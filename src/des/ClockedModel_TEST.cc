@@ -28,9 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include <des/des.h>
 #include <gtest/gtest.h>
 #include <prim/prim.h>
+
+#include "des/ClockedModel.h"
+#include "des/Event.h"
+#include "des/Model.h"
+#include "des/Simulator.h"
+#include "des/Time.h"
 
 class SetTimeModel : public des::Model {
  public:

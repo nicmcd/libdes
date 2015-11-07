@@ -42,8 +42,8 @@
 namespace des {
 
 Executer::Executer(Simulator* _simulator, u32 _id)
-    : simulator_(_simulator), id_(_id),
-      stop_(false), running_(false), executing_(false) {}
+    : simulator_(_simulator), id_(_id), stop_(false), running_(false),
+      executing_(false), executed_(0) {}
 
 Executer::~Executer() {}
 
@@ -93,8 +93,12 @@ void Executer::execute() {
   executing_ = true;
 }
 
-bool Executer::executing() {
+bool Executer::executing() const {
   return executing_;
+}
+
+u64 Executer::executed() const {
+  return executed_;
 }
 
 void Executer::run() {
@@ -141,6 +145,7 @@ void Executer::run() {
         Model* model = event->model;
         EventHandler handler = event->handler;
         (model->*handler)(event);
+        executed_++;
       }
     }
 

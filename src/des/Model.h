@@ -63,20 +63,20 @@ class Model {
 };
 
 #ifndef NDEBUGLOG
-s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
-              const char* _name, const Time& _time, const char* _format, ...);
+s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
+              const Time& _time, const char* _format, ...);
 
-#define logf(...) (                                                     \
-    (this->debug && this->simulator->getLogger()) ?                     \
-    (des::debuglogf(this->simulator->getLogger(),                       \
+#define dlogf(...) (                                                    \
+    ((debug) && (simulator->getLogger())) ?                             \
+    (des::debuglogf(simulator->getLogger(),                             \
                     __func__,                                           \
                     __LINE__,                                           \
-                    this->fullName().c_str(),                           \
-                    this->simulator->time(),                            \
+                    fullName().c_str(),                                 \
+                    simulator->time(),                                  \
                     __VA_ARGS__)) : (0))
 #else  // NDEBUGLOG
 
-#define logf(...)
+#define dlogf(...)
 
 #endif  // NDEBUGLOG
 

@@ -59,7 +59,8 @@ class Executer {
   void addEvent(Event* _event);
   QueueStats queueStats();
   void execute();
-  bool executing();
+  bool executing() const;
+  u64 executed() const;  // only safe to call during !executing()
 
  private:
   void run();
@@ -73,6 +74,8 @@ class Executer {
 
   std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
   SpinLock queueLock_;
+
+  u64 executed_;
 };
 
 }  // namespace des

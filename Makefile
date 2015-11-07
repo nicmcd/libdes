@@ -22,10 +22,11 @@ CXX           := g++
 AR            := gcc-ar
 SRC_EXTS      := .cc
 HDR_EXTS      := .h .tcc
-CXX_FLAGS     := -Wall -Wextra -pedantic -Wfatal-errors -std=c++11
+CXX_FLAGS     := -std=c++11 -Wall -Wextra -pedantic -Wfatal-errors 
 CXX_FLAGS     += -march=native -g -O3 -flto
+CXX_FLAGS     += -pthread
 #CXX_FLAGS     += -DNDEBUGLOG
-LINK_FLAGS    :=
+LINK_FLAGS    := -lpthread -Wl,--no-as-needed
 
 #--------------------- Auto Makefile ------------------------------------------#
 include ~/.makeccpp/auto_lib.mk

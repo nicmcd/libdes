@@ -68,8 +68,8 @@ std::string Model::fullName() const {
 }
 
 #ifndef NDEBUGLOG
-s32 debuglogf(des::Logger* _logger, const char* _func, s32 _line,
-              const char* _name, const Time& _time, const char* _format, ...) {
+s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
+              const Time& _time, const char* _format, ...) {
   // create a buffer to create the string in
   s32 budget = 2000;
   char* buf = new char[budget];
