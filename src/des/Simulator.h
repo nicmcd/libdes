@@ -71,6 +71,9 @@ class Simulator {
   void addDebugName(const std::string& _fullName);
   void debugCheck();
 
+  // this triggers one statistics output in the logger
+  void showStats();
+
  private:
   std::vector<std::tuple<Executer*, Executer::QueueStats> > executers_;
 
@@ -79,6 +82,9 @@ class Simulator {
 
   // this is a logger for the entire simulation framework
   Logger* logger_;
+
+  // trigger to show stats
+  volatile bool showStats_;
 
   // models and debugging
   std::unordered_map<std::string, Model*> models_;

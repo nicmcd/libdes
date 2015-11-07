@@ -49,7 +49,7 @@ Simulator::Simulator()
     : Simulator(0) {}
 
 Simulator::Simulator(u32 _numThreads)
-    : time_(0, 0), logger_(nullptr) {
+    : time_(0, 0), logger_(nullptr), showStats_(false) {
   if (_numThreads == 0) {
     _numThreads = std::thread::hardware_concurrency() - 1;
     if (_numThreads == 0) {
@@ -99,7 +99,7 @@ void Simulator::simulate() {
   // statistics tracking
   u64 totalEvents = 0;
   u64 intervalEvents = 0;
-  Time lastSimTime = 0;
+  Tick lastSimTicks = 0;
   std::chrono::steady_clock::time_point startTime =
       std::chrono::steady_clock::now();
   std::chrono::steady_clock::time_point lastRealTime = startTime;
@@ -125,6 +125,10 @@ void Simulator::simulate() {
       }
     }
 
+    // update the statistics
+    totalEvents += eventCount;
+    intervalEvents += eventCount;
+
     // determine if simulation is complete (no more events)
     if (eventCount == 0) {
       break;
@@ -142,6 +146,31 @@ void Simulator::simulate() {
       }
     }
 
+    // optionally print statistics
+    if (showStats_) {
+      showStats_ = false;
+
+      std::chrono::steady_clock::time_point realTime =
+          std::chrono::steady_clock::now();
+      f64 elapsedRealTime =
+          std::chrono::duration_cast<std::chrono::duration<f64> >(
+              realTime - lastRealTime).count();
+
+      Tick elapsedSimTicks = time_.tick - lastSimTicks;
+
+      printf("%11lu events : %12lu ticks : %10.0f events/sec "
+             ": %4.2f events/tick : %8.0f ticks/sec\n",
+             totalEvents,
+             time_.tick,
+             intervalEvents / elapsedRealTime,
+             intervalEvents / static_cast<f64>(elapsedSimTicks),
+             elapsedSimTicks / static_cast<f64>(elapsedRealTime));
+
+      lastSimTicks = time_.tick;
+      lastRealTime = realTime;
+      intervalEvents = 0;
+    }
+
     // wait for all executers to finish
     for (auto& e : executers_) {
       Executer* exe = std::get<0>(e);
@@ -155,6 +184,28 @@ void Simulator::simulate() {
   for (auto e : executers_) {
     Executer* exe = std::get<0>(e);
     exe->stop();
+  }
+
+  if (true) {
+    // print statistic totals
+    std::chrono::steady_clock::time_point realTime =
+        std::chrono::steady_clock::now();
+    std::chrono::duration<f64> totalElapsedRealTime =
+        std::chrono::duration_cast<std::chrono::duration<f64>>(
+            realTime - startTime);
+    f64 runTime = totalElapsedRealTime.count();
+
+    printf("\n"
+           "Total event count:      %lu\n"
+           "Total simulation units: %lu\n"
+           "Total real seconds:     %.3f\n"
+           "\n"
+           "Events per real seconds:    %.3f\n"
+           "Events per sim units:       %.3f\n"
+           "Sim units per real seconds: %.3f\n"
+           "\n",
+           totalEvents, time_.tick, runTime, totalEvents / runTime,
+           totalEvents / static_cast<f64>(time_.tick), time_.tick / runTime);
   }
 
   // wait for all executers to finish
@@ -294,6 +345,10 @@ void Simulator::debugCheck() {
   }
   assert(toBeDebugged_.size() == 0);
   toBeDebugged_.reserve(0);
+}
+
+void Simulator::showStats() {
+  showStats_ = true;
 }
 
 }  // namespace des
