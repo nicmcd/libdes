@@ -97,6 +97,7 @@ void Simulator::simulate() {
   }
 
   // statistics tracking
+  u64 uniqueTimeSteps = 0;
   u64 currEventCount = 0;
   u64 prevEventCount = 0;
   u64 intervalEvents = 0;
@@ -136,6 +137,9 @@ void Simulator::simulate() {
     if (!more) {
       break;
     }
+
+    // count time steps
+    uniqueTimeSteps++;
 
     // update the time
     time_ = nextTime;
@@ -178,8 +182,7 @@ void Simulator::simulate() {
     for (auto& e : executers_) {
       Executer* exe = std::get<0>(e);
       while (exe->executing()) {
-        // TODO(nic): I don't know why, but this increases performance ?!?!?
-        std::this_thread::sleep_for(std::chrono::microseconds(1));
+        // do nothing
       }
     }
   }
@@ -200,15 +203,17 @@ void Simulator::simulate() {
     f64 runTime = totalElapsedRealTime.count();
 
     printf("\n"
-           "Total event count:      %lu\n"
-           "Total simulation units: %lu\n"
-           "Total real seconds:     %.3f\n"
+           "Total event count:          %lu\n"
+           "Total simulation ticks:     %lu\n"
+           "Total unique time steps:    %lu\n"
+           "Total real seconds:         %.3f\n"
            "\n"
            "Events per real seconds:    %.3f\n"
-           "Events per sim units:       %.3f\n"
-           "Sim units per real seconds: %.3f\n"
+           "Events per sim ticks:       %.3f\n"
+           "Sim ticks per real seconds: %.3f\n"
            "\n",
-           currEventCount, time_.tick, runTime, currEventCount / runTime,
+           currEventCount, time_.tick, uniqueTimeSteps, runTime,
+           currEventCount / runTime,
            currEventCount / static_cast<f64>(time_.tick), time_.tick / runTime);
   }
 
@@ -220,83 +225,6 @@ void Simulator::simulate() {
     }
   }
 }
-
-
-  /*
-  // all these variables are used for statistics gathering and printing
-  u64 totalEvents = 0;
-  u64 intervalEvents = 0;
-  u64 lastSimTime = 0;
-  std::chrono::steady_clock::time_point startTime =
-      std::chrono::steady_clock::now();
-  std::chrono::steady_clock::time_point lastRealTime = startTime;
-  std::chrono::duration<f64> sum(0);
-
-  while (queue_.empty() == false) {
-    // pop next event
-    Event* event = queue_.top();
-    time_ = event->time;
-    epsilon_ = event->epsilon;
-    queue_.pop();
-
-    // call the models event handler
-    Model* model = event->model;
-    EventHandler handler = event->handler;
-    (model->*handler)(event);
-
-    // count events
-    totalEvents++;
-    intervalEvents++;
-
-    // if requested, show stats
-    if (showStats_) {
-      showStats_ = false;
-
-      std::chrono::steady_clock::time_point realTime =
-          std::chrono::steady_clock::now();
-      f64 elapsedRealTime =
-          std::chrono::duration_cast<std::chrono::duration<f64>>(
-              realTime - lastRealTime).count();
-
-      u64 elapsedSimTime = time_ - lastSimTime;
-      lastSimTime = time_;
-
-      printf("%11lu events : %8lu elements : %12lu units : %10.0f events/sec "
-             ": %4.2f events/unit : %8.0f units/sec\n",
-             totalEvents,
-             queue_.size(),
-             time_,
-             intervalEvents / elapsedRealTime,
-             intervalEvents / static_cast<f64>(elapsedSimTime),
-             elapsedSimTime / static_cast<f64>(elapsedRealTime));
-
-      lastRealTime = realTime;
-      intervalEvents = 0;
-    }
-  }
-
-  if (_printStatsSummary) {
-    // print statistic totals
-    std::chrono::steady_clock::time_point realTime =
-        std::chrono::steady_clock::now();
-    std::chrono::duration<f64> totalElapsedRealTime =
-        std::chrono::duration_cast<std::chrono::duration<f64>>(
-            realTime - startTime);
-    f64 runTime = totalElapsedRealTime.count();
-
-    printf("\n"
-           "Total event count:      %lu\n"
-           "Total simulation units: %lu\n"
-           "Total real seconds:     %.3f\n"
-           "\n"
-           "Events per real seconds:    %.3f\n"
-           "Events per sim units:       %.3f\n"
-           "Sim units per real seconds: %.3f\n"
-           "\n",
-           totalEvents, time_, runTime, totalEvents / runTime,
-           totalEvents / static_cast<f64>(time_), time_ / runTime);
-  }
-  */
 
 Logger* Simulator::getLogger() const {
   return logger_;
