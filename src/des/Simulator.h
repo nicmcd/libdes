@@ -58,7 +58,7 @@ class Simulator {
   // events and event handling
   Time time() const;
   void addEvent(Event* _event);
-  void simulate();
+  void simulate(bool _logSummary);
 
   // logging
   Logger* getLogger() const;

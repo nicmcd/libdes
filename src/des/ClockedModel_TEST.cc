@@ -105,6 +105,7 @@ TEST(ClockedModel, futureCycle) {
       }
     }
     t.setEvent(des::Time(now + 1, 21));
-    sim.simulate();
+    sim.simulate(false);
+    printf("cnt is %lu\n", cnt);
   }
 }

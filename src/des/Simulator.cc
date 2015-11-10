@@ -58,11 +58,12 @@ Simulator::Simulator(u32 _numThreads)
   }
 
   if (_numThreads > std::thread::hardware_concurrency()) {
-    printf("*************************************************************\n"
-           "* WARNING WARNING WARNING WARNING WARNING WARNING WARNING   *\n"
-           "* The simulator will have terrible performance if there are *\n"
-           "* more execution threads than the hardware supports.        *\n"
-           "*************************************************************\n");
+    fprintf(stderr,
+            "*************************************************************\n"
+            "* WARNING WARNING WARNING WARNING WARNING WARNING WARNING   *\n"
+            "* The simulator will have terrible performance if there are *\n"
+            "* more execution threads than the hardware supports.        *\n"
+            "*************************************************************\n");
   }
 
   executers_.resize(_numThreads);
@@ -90,7 +91,11 @@ void Simulator::addEvent(Event* _event) {
   std::get<0>(executers_.at(exe))->addEvent(_event);
 }
 
-void Simulator::simulate() {
+void Simulator::simulate(bool _logSummary) {
+  // create a buffer to show stats on
+  const u32 STATS_SIZE = 1024;
+  char* statsString = new char[STATS_SIZE];
+
   // start all executers (besides the direct executer)
   for (u32 id = 1; id < executers_.size(); id++) {
     std::get<0>(executers_.at(id))->start();
@@ -177,13 +182,16 @@ void Simulator::simulate() {
 
       Tick elapsedSimTicks = time_.tick - lastSimTicks;
 
-      printf("%11lu events : %12lu ticks : %10.0f events/sec "
-             ": %4.2f events/tick : %8.0f ticks/sec\n",
-             currEventCount,
-             time_.tick,
-             intervalEvents / elapsedRealTime,
-             intervalEvents / static_cast<f64>(elapsedSimTicks),
-             elapsedSimTicks / static_cast<f64>(elapsedRealTime));
+      s32 r = snprintf(statsString, STATS_SIZE,
+                       "%11lu events : %12lu ticks : %10.0f events/sec "
+                       ": %4.2f events/tick : %8.0f ticks/sec\n",
+                       currEventCount,
+                       time_.tick,
+                       intervalEvents / elapsedRealTime,
+                       intervalEvents / static_cast<f64>(elapsedSimTicks),
+                       elapsedSimTicks / static_cast<f64>(elapsedRealTime));
+      assert(r > 0 && r < (s32)STATS_SIZE);
+      logger_->log(statsString);
 
       lastSimTicks = time_.tick;
       lastRealTime = realTime;
@@ -205,7 +213,7 @@ void Simulator::simulate() {
     exe->stop();
   }
 
-  if (true) {
+  if (_logSummary) {
     // print statistic totals
     std::chrono::steady_clock::time_point realTime =
         std::chrono::steady_clock::now();
@@ -214,19 +222,23 @@ void Simulator::simulate() {
             realTime - startTime);
     f64 runTime = totalElapsedRealTime.count();
 
-    printf("\n"
-           "Total event count:          %lu\n"
-           "Total simulation ticks:     %lu\n"
-           "Total unique time steps:    %lu\n"
-           "Total real seconds:         %.3f\n"
-           "\n"
-           "Events per real seconds:    %.3f\n"
-           "Events per sim ticks:       %.3f\n"
-           "Sim ticks per real seconds: %.3f\n"
-           "\n",
-           currEventCount, time_.tick, uniqueTimeSteps, runTime,
-           currEventCount / runTime,
-           currEventCount / static_cast<f64>(time_.tick), time_.tick / runTime);
+    s32 r = snprintf(statsString, STATS_SIZE,
+                     "\n"
+                     "Total event count:          %lu\n"
+                     "Total simulation ticks:     %lu\n"
+                     "Total unique time steps:    %lu\n"
+                     "Total real seconds:         %.3f\n"
+                     "\n"
+                     "Events per real seconds:    %.3f\n"
+                     "Events per sim ticks:       %.3f\n"
+                     "Sim ticks per real seconds: %.3f\n"
+                     "\n",
+                     currEventCount, time_.tick, uniqueTimeSteps, runTime,
+                     currEventCount / runTime,
+                     currEventCount / static_cast<f64>(time_.tick),
+                     time_.tick / runTime);
+    assert(r > 0 && r < (s32)STATS_SIZE);
+    logger_->log(statsString);
   }
 
   // wait for all executers to finish
@@ -237,6 +249,9 @@ void Simulator::simulate() {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
   }
+
+  // clean up the stats string buffer
+  delete[] statsString;
 }
 
 Logger* Simulator::getLogger() const {
