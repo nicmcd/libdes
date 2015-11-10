@@ -50,7 +50,7 @@ class Executer {
     Time nextTime;
   };
 
-  Executer(Simulator* _simulator, u32 _id);
+  Executer(Simulator* _simulator, u32 _id, bool _direct);
   ~Executer();
 
   void start();
@@ -64,9 +64,11 @@ class Executer {
 
  private:
   void run();
+  void timeStep();
 
   Simulator* simulator_;
   u32 id_;
+  bool direct_;
 
   volatile bool stop_;
   volatile bool running_;

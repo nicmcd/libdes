@@ -51,13 +51,13 @@ Simulator::Simulator()
 Simulator::Simulator(u32 _numThreads)
     : time_(0, 0), logger_(nullptr), showStats_(false) {
   if (_numThreads == 0) {
-    _numThreads = std::thread::hardware_concurrency() - 1;
+    _numThreads = std::thread::hardware_concurrency();
     if (_numThreads == 0) {
       _numThreads = 1;
     }
   }
 
-  if (_numThreads + 1 > std::thread::hardware_concurrency()) {
+  if (_numThreads > std::thread::hardware_concurrency()) {
     printf("*************************************************************\n"
            "* WARNING WARNING WARNING WARNING WARNING WARNING WARNING   *\n"
            "* The simulator will have terrible performance if there are *\n"
@@ -67,7 +67,8 @@ Simulator::Simulator(u32 _numThreads)
 
   executers_.resize(_numThreads);
   for (u32 id = 0; id < _numThreads; id++) {
-    std::get<0>(executers_.at(id)) = new Executer(this, id);
+    bool direct = id == 0;
+    std::get<0>(executers_.at(id)) = new Executer(this, id, direct);
   }
   logger_ = new Logger();
 }
@@ -90,10 +91,9 @@ void Simulator::addEvent(Event* _event) {
 }
 
 void Simulator::simulate() {
-  // start all executers
-  for (auto e : executers_) {
-    Executer* exe = std::get<0>(e);
-    exe->start();
+  // start all executers (besides the direct executer)
+  for (u32 id = 1; id < executers_.size(); id++) {
+    std::get<0>(executers_.at(id))->start();
   }
 
   // statistics tracking
@@ -113,8 +113,9 @@ void Simulator::simulate() {
     currEventCount = 0;
     Time nextTime = Time();
     bool more = false;
-    for (auto& e : executers_) {
+    for (u32 id = 0; id < executers_.size(); id++) {
       // gather queue stats from executer
+      auto& e = executers_.at(id);
       Executer* exe = std::get<0>(e);
       Executer::QueueStats& qs = std::get<1>(e);
       qs = exe->queueStats();
@@ -144,8 +145,19 @@ void Simulator::simulate() {
     // update the time
     time_ = nextTime;
 
-    // turn on executers with events for this time
-    for (auto& e : executers_) {
+    // turn on executers with events for this time (besides the direct executer)
+    for (u32 id = 1; id < executers_.size(); id++) {
+      auto& e = executers_.at(id);
+      Executer* exe = std::get<0>(e);
+      Executer::QueueStats& qs = std::get<1>(e);
+      if (qs.nextTime == nextTime) {
+        exe->execute();
+      }
+    }
+
+    // execute the direct executer directly
+    {
+      auto& e = executers_.at(0);
       Executer* exe = std::get<0>(e);
       Executer::QueueStats& qs = std::get<1>(e);
       if (qs.nextTime == nextTime) {
@@ -178,17 +190,17 @@ void Simulator::simulate() {
       intervalEvents = 0;
     }
 
-    // wait for all executers to finish
-    for (auto& e : executers_) {
+    // wait for all executers to finish (direct executer is already finished)
+    for (u32 id = 1; id < executers_.size(); id++) {
+      auto& e = executers_.at(id);
       Executer* exe = std::get<0>(e);
-      while (exe->executing()) {
-        // do nothing
-      }
+      while (exe->executing()) {}
     }
   }
 
-  // give executers stop command
-  for (auto e : executers_) {
+  // give executers stop command (besides the direct executer)
+  for (u32 id = 1; id < executers_.size(); id++) {
+    auto& e = executers_.at(id);
     Executer* exe = std::get<0>(e);
     exe->stop();
   }
@@ -218,7 +230,8 @@ void Simulator::simulate() {
   }
 
   // wait for all executers to finish
-  for (auto e : executers_) {
+  for (u32 id = 1; id < executers_.size(); id++) {
+    auto& e = executers_.at(id);
     Executer* exe = std::get<0>(e);
     while (exe->running()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(1));

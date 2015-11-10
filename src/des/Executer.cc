@@ -41,13 +41,14 @@
 
 namespace des {
 
-Executer::Executer(Simulator* _simulator, u32 _id)
-    : simulator_(_simulator), id_(_id), stop_(false), running_(false),
-      executing_(false), executed_(0) {}
+Executer::Executer(Simulator* _simulator, u32 _id, bool _direct)
+    : simulator_(_simulator), id_(_id), direct_(_direct), stop_(false),
+      running_(false), executing_(false), executed_(0) {}
 
 Executer::~Executer() {}
 
 void Executer::start() {
+  assert(!direct_);
   stop_ = false;
   if (!running_) {
     std::thread thread(&Executer::run, this);
@@ -56,10 +57,12 @@ void Executer::start() {
 }
 
 void Executer::stop() {
+  assert(!direct_);
   stop_ = true;
 }
 
 bool Executer::running() const {
+  assert(!direct_);
   return running_;
 }
 
@@ -89,11 +92,16 @@ Executer::QueueStats Executer::queueStats() {
 }
 
 void Executer::execute() {
-  assert(!executing_);
-  executing_ = true;
+  if (!direct_) {
+    assert(!executing_);
+    executing_ = true;
+  } else {
+    timeStep();
+  }
 }
 
 bool Executer::executing() const {
+  assert(!direct_);
   return executing_;
 }
 
@@ -102,6 +110,8 @@ u64 Executer::executed() const {
 }
 
 void Executer::run() {
+  assert(!direct_);
+
   // running FSM
   assert(!running_);
   running_ = true;
@@ -111,49 +121,12 @@ void Executer::run() {
   while (true) {
     // determine if we are allowed to execute
     if (executing_) {
-      // get a current snapshot of time
-      Time time = simulator_->time();
-
-      // loop until all events up to the current time have been executed
-      // printf("%u now executing at %s\n", id_, time.toString().c_str());
-      while (true) {
-        Event* event = nullptr;
-
-        // peek at the next event
-        queueLock_.lock();
-        if (!queue_.empty()) {
-          event = queue_.top();
-        }
-        queueLock_.unlock();
-
-        // determine if this time step is complete
-        if ((event == nullptr) || (event->time > time)) {
-          // printf("%u done for now\n", id_);
-          executing_ = false;
-          break;
-        }
-
-        // get the next event, which is now guaranteed to be in this time step
-        queueLock_.lock();
-        event = queue_.top();
-        queue_.pop();
-        queueLock_.unlock();
-        assert(event->time == time);
-
-        // execute the event
-        // printf("%u executing event at %s\n", id_, time.toString().c_str());
-        Model* model = event->model;
-        EventHandler handler = event->handler;
-        (model->*handler)(event);
-        executed_++;
-      }
+      timeStep();
     }
 
-    // determine if stop command has been given
+    // stop when commanded to
     if (stop_) {
       break;
-    } else {
-      // do nothing
     }
   }
 
@@ -161,6 +134,45 @@ void Executer::run() {
   // printf("Executer %u stopping\n", id_);
   running_ = false;
   stop_ = false;
+}
+
+void Executer::timeStep() {
+  // get a current snapshot of time
+  Time time = simulator_->time();
+
+  // loop until all events up to the current time have been executed
+  // printf("%u now executing at %s\n", id_, time.toString().c_str());
+  while (true) {
+    Event* event = nullptr;
+
+    // peek at the next event
+    queueLock_.lock();
+    if (!queue_.empty()) {
+      event = queue_.top();
+    }
+    queueLock_.unlock();
+
+    // determine if this time step is complete
+    if ((event == nullptr) || (event->time > time)) {
+      // printf("%u done for now\n", id_);
+      executing_ = false;
+      break;
+    }
+
+    // get the next event, which is now guaranteed to be in this time step
+    queueLock_.lock();
+    event = queue_.top();
+    queue_.pop();
+    queueLock_.unlock();
+    assert(event->time == time);
+
+    // execute the event
+    // printf("%u executing event at %s\n", id_, time.toString().c_str());
+    Model* model = event->model;
+    EventHandler handler = event->handler;
+    (model->*handler)(event);
+    executed_++;
+  }
 }
 
 }  // namespace des
