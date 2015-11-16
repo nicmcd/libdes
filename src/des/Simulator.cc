@@ -46,7 +46,7 @@
 namespace des {
 
 Simulator::Simulator()
-    : Simulator(0) {}
+    : Simulator(1) {}
 
 Simulator::Simulator(u32 _numThreads)
     : time_(0, 0), logger_(nullptr), showStats_(false) {
@@ -239,15 +239,6 @@ void Simulator::simulate(bool _logSummary) {
                      time_.tick / runTime);
     assert(r > 0 && r < (s32)STATS_SIZE);
     logger_->log(statsString);
-  }
-
-  // wait for all executers to finish
-  for (u32 id = 1; id < executers_.size(); id++) {
-    auto& e = executers_.at(id);
-    Executer* exe = std::get<0>(e);
-    while (exe->running()) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    }
   }
 
   // clean up the stats string buffer

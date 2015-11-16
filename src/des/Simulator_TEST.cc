@@ -28,61 +28,61 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EXECUTER_H_
-#define DES_EXECUTER_H_
+#include "des/Simulator.h"
 
+#include <gtest/gtest.h>
 #include <prim/prim.h>
 
-#include <atomic>
-#include <queue>
-#include <thread>
+#include <random>
 #include <vector>
 
 #include "des/Event.h"
-#include "des/SpinLock.h"
+#include "des/Model.h"
+#include "des/Time.h"
 
-namespace des {
-
-class Simulator;
-
-class Executer {
+class NullModel : public des::Model {
  public:
-  struct QueueStats {
-    u64 size;
-    Time nextTime;
-  };
+  NullModel(des::Simulator* _simulator, u64 _id)
+      : des::Model(_simulator, std::to_string(_id), nullptr), id_(_id),
+        event_(this, static_cast<des::EventHandler>(
+            &NullModel::ignoreEvent), des::Time()) {
+    debug = true;
+  }
 
-  Executer(Simulator* _simulator, u32 _id, bool _direct);
-  ~Executer();
+  void ignoreEvent(des::Event* _event) {
+    (void)_event;
+  }
 
-  void start();
-  void stop();
-  bool running() const;
-  void addEvent(Event* _event);
-  QueueStats queueStats();
-  void execute();
-  bool executing() const;
-  u64 executed() const;  // only safe to call during !executing()
+  void nextEvent() {
+    event_.time.tick += 1 + (prng_() % 100);
+    simulator->addEvent(&event_);
+  }
 
  private:
-  void run();
-  void timeStep();
-
-  Simulator* simulator_;
-  u32 id_;
-  bool direct_;
-
-  std::thread thread_;
-  std::atomic<bool> stop_;
-  std::atomic<bool> running_;
-  std::atomic<bool> executing_;
-
-  std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
-  SpinLock queueLock_;
-
-  u64 executed_;
+  u64 id_;
+  des::Event event_;
+  std::mt19937_64 prng_;
 };
 
-}  // namespace des
+TEST(Simulator, multisim) {
+  const u64 MODELS = 3;
+  const u64 SIMS = 100;
 
-#endif  // DES_EXECUTER_H_
+  des::Simulator* sim = new des::Simulator();
+  std::vector<NullModel*> models;
+  for (u64 id = 0; id < MODELS; id++) {
+    models.push_back(new NullModel(sim, id));
+  }
+
+  for (u64 s = 0; s < SIMS; s++) {
+    for (u64 id = 0; id < MODELS; id++) {
+      models.at(id)->nextEvent();
+    }
+    sim->simulate(false);
+  }
+
+  for (u64 id = 0; id < MODELS; id++) {
+    delete models.at(id);
+  }
+  delete sim;
+}

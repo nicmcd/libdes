@@ -28,10 +28,14 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "des/ClockedModel.h"
+
 #include <gtest/gtest.h>
 #include <prim/prim.h>
 
-#include "des/ClockedModel.h"
+#include <chrono>
+#include <thread>
+
 #include "des/Event.h"
 #include "des/Model.h"
 #include "des/Simulator.h"
@@ -70,6 +74,8 @@ u64 slowFutureCycle(des::Tick _now, des::Tick _period, des::Tick _phase,
 }
 
 TEST(ClockedModel, futureCycle) {
+  const u64 SIMS = 100;
+
   des::Simulator sim;
   des::ClockedModel a(&sim, "a", nullptr, 1000, 0);
   des::ClockedModel b("b", &a);
@@ -92,7 +98,7 @@ TEST(ClockedModel, futureCycle) {
   ASSERT_EQ(c.cyclePeriod(), 1500u);
   ASSERT_EQ(c.cyclePhase(), 500u);
 
-  for (u64 cnt = 0; cnt < 10000; cnt++) {
+  for (u64 cnt = 0; cnt < SIMS; cnt++) {
     des::Tick now = sim.time().tick;
     for (u64 cyc = 1; cyc < 5; cyc++) {
       for (u64 idx = 0; idx < m.size(); idx++) {
@@ -106,6 +112,5 @@ TEST(ClockedModel, futureCycle) {
     }
     t.setEvent(des::Time(now + 1, 21));
     sim.simulate(false);
-    printf("cnt is %lu\n", cnt);
   }
 }

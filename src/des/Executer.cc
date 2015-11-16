@@ -35,7 +35,6 @@
 #include <cassert>
 
 #include <chrono>
-#include <thread>
 
 #include "des/Simulator.h"
 
@@ -49,16 +48,16 @@ Executer::~Executer() {}
 
 void Executer::start() {
   assert(!direct_);
-  stop_ = false;
-  if (!running_) {
-    std::thread thread(&Executer::run, this);
-    thread.detach();
-  }
+  assert(!running_);
+  assert(!stop_);
+  thread_ = std::thread(&Executer::run, this);
 }
 
 void Executer::stop() {
   assert(!direct_);
   stop_ = true;
+  thread_.join();
+  thread_ = std::thread();
 }
 
 bool Executer::running() const {
@@ -73,18 +72,14 @@ void Executer::addEvent(Event* _event) {
 }
 
 Executer::QueueStats Executer::queueStats() {
+  assert(executing_ == false);  // this function isn't safe when executing
   Executer::QueueStats qs;
   Event* event = nullptr;
-  qs.nextTime = Time();   ////////////////////// this is already the case?
+  qs.nextTime = Time();  // default to invalid time
 
-  queueLock_.lock();
   qs.size = queue_.size();
   if (qs.size > 0) {
     event = queue_.top();
-  }
-  queueLock_.unlock();
-
-  if (event != nullptr) {
     qs.nextTime = event->time;
   }
 
@@ -132,8 +127,8 @@ void Executer::run() {
 
   // running FSM
   // printf("Executer %u stopping\n", id_);
-  running_ = false;
   stop_ = false;
+  running_ = false;
 }
 
 void Executer::timeStep() {
@@ -143,27 +138,27 @@ void Executer::timeStep() {
   // loop until all events up to the current time have been executed
   // printf("%u now executing at %s\n", id_, time.toString().c_str());
   while (true) {
+    bool done = false;
     Event* event = nullptr;
 
-    // peek at the next event
+    // determine if this time step is complete
+    //  if not, get the next event
     queueLock_.lock();
     if (!queue_.empty()) {
       event = queue_.top();
     }
+    if ((event == nullptr) || (event->time > time)) {
+      executing_ = false;
+      done = true;
+    } else {
+      queue_.pop();
+    }
     queueLock_.unlock();
 
-    // determine if this time step is complete
-    if ((event == nullptr) || (event->time > time)) {
-      // printf("%u done for now\n", id_);
-      executing_ = false;
+    if (done) {
       break;
     }
 
-    // get the next event, which is now guaranteed to be in this time step
-    queueLock_.lock();
-    event = queue_.top();
-    queue_.pop();
-    queueLock_.unlock();
     assert(event->time == time);
 
     // execute the event
