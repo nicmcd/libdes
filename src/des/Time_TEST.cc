@@ -55,8 +55,10 @@ TEST(Time, copyconstructor) {
   des::Time s(t);
   t.tick = 0;
   t.epsilon = 0;
-  ASSERT_EQ(t.tick, 12345678u);
-  ASSERT_EQ(t.epsilon, 89u);
+  ASSERT_EQ(t.tick, 0u);
+  ASSERT_EQ(t.epsilon, 0u);
+  ASSERT_EQ(s.tick, 12345678u);
+  ASSERT_EQ(s.epsilon, 89u);
 }
 
 TEST(Time, assignmentoperator) {
@@ -65,8 +67,10 @@ TEST(Time, assignmentoperator) {
   s = t;
   t.tick = 0;
   t.epsilon = 0;
-  ASSERT_EQ(t.tick, 12345678u);
-  ASSERT_EQ(t.epsilon, 89u);
+  ASSERT_EQ(t.tick, 0u);
+  ASSERT_EQ(t.epsilon, 0u);
+  ASSERT_EQ(s.tick, 12345678u);
+  ASSERT_EQ(s.epsilon, 89u);
 }
 
 TEST(Time, eq) {
@@ -78,18 +82,21 @@ TEST(Time, eq) {
   b.tick = 100;
   b.epsilon = 10;
   ASSERT_TRUE(a == b);
+  ASSERT_TRUE(a.operator==(b));
 
   a.tick = 100;
   a.epsilon = 11;
   b.tick = 100;
   b.epsilon = 10;
   ASSERT_FALSE(a == b);
+  ASSERT_FALSE(a.operator==(b));
 
   a.tick = 100;
   a.epsilon = 10;
   b.tick = 101;
   b.epsilon = 10;
   ASSERT_FALSE(a == b);
+  ASSERT_FALSE(a.operator==(b));
 }
 
 TEST(Time, ne) {
@@ -100,19 +107,102 @@ TEST(Time, ne) {
   a.epsilon = 10;
   b.tick = 100;
   b.epsilon = 10;
-  ASSERT_FALSE(a == b);
+  ASSERT_FALSE(a != b);
+  ASSERT_FALSE(a.operator!=(b));
 
   a.tick = 100;
   a.epsilon = 11;
   b.tick = 100;
   b.epsilon = 10;
-  ASSERT_TRUE(a == b);
+  ASSERT_TRUE(a != b);
+  ASSERT_TRUE(a.operator!=(b));
 
   a.tick = 100;
   a.epsilon = 10;
   b.tick = 101;
   b.epsilon = 10;
-  ASSERT_TRUE(a == b);
+  ASSERT_TRUE(a != b);
+  ASSERT_TRUE(a.operator!=(b));
+}
+
+TEST(Time, lt) {
+  des::Time a;
+  des::Time b;
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_FALSE(a < b);
+  ASSERT_FALSE(a.operator<(b));
+
+  a.tick = 100;
+  a.epsilon = 9;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_TRUE(a < b);
+  ASSERT_TRUE(a.operator<(b));
+
+  a.tick = 99;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_TRUE(a < b);
+  ASSERT_TRUE(a.operator<(b));
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 9;
+  ASSERT_FALSE(a < b);
+  ASSERT_FALSE(a.operator<(b));
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 99;
+  b.epsilon = 10;
+  ASSERT_FALSE(a < b);
+  ASSERT_FALSE(a.operator<(b));
+}
+
+TEST(Time, gt) {
+  des::Time a;
+  des::Time b;
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_FALSE(a > b);
+  ASSERT_FALSE(a.operator>(b));
+
+  a.tick = 100;
+  a.epsilon = 9;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_FALSE(a > b);
+  ASSERT_FALSE(a.operator>(b));
+
+  a.tick = 99;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_FALSE(a > b);
+  ASSERT_FALSE(a.operator>(b));
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 9;
+  ASSERT_TRUE(a > b);
+  ASSERT_TRUE(a.operator>(b));
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 99;
+  b.epsilon = 10;
+  ASSERT_TRUE(a > b);
+  ASSERT_TRUE(a.operator>(b));
 }
 
 TEST(Time, le) {
@@ -123,29 +213,114 @@ TEST(Time, le) {
   a.epsilon = 10;
   b.tick = 100;
   b.epsilon = 10;
-  ASSERT_FALSE(a < b);
+  ASSERT_TRUE(a <= b);
+  ASSERT_TRUE(a.operator<=(b));
 
   a.tick = 100;
   a.epsilon = 9;
   b.tick = 100;
   b.epsilon = 10;
-  ASSERT_TRUE(a < b);
+  ASSERT_TRUE(a <= b);
+  ASSERT_TRUE(a.operator<=(b));
 
   a.tick = 99;
   a.epsilon = 10;
   b.tick = 100;
   b.epsilon = 10;
-  ASSERT_TRUE(a < b);
+  ASSERT_TRUE(a <= b);
+  ASSERT_TRUE(a.operator<=(b));
 
   a.tick = 100;
   a.epsilon = 10;
   b.tick = 100;
   b.epsilon = 9;
-  ASSERT_FALSE(a < b);
+  ASSERT_FALSE(a <= b);
+  ASSERT_FALSE(a.operator<=(b));
 
   a.tick = 100;
   a.epsilon = 10;
   b.tick = 99;
   b.epsilon = 10;
-  ASSERT_FALSE(a < b);
+  ASSERT_FALSE(a <= b);
+  ASSERT_FALSE(a.operator<=(b));
+}
+
+TEST(Time, ge) {
+  des::Time a;
+  des::Time b;
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_TRUE(a >= b);
+  ASSERT_TRUE(a.operator>=(b));
+
+  a.tick = 100;
+  a.epsilon = 9;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_FALSE(a >= b);
+  ASSERT_FALSE(a.operator>=(b));
+
+  a.tick = 99;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_FALSE(a >= b);
+  ASSERT_FALSE(a.operator>=(b));
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 9;
+  ASSERT_TRUE(a >= b);
+  ASSERT_TRUE(a.operator>=(b));
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 99;
+  b.epsilon = 10;
+  ASSERT_TRUE(a >= b);
+  ASSERT_TRUE(a.operator>=(b));
+}
+
+TEST(Time, compare) {
+  des::Time a;
+  des::Time b;
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_EQ(a.compare(b), 0);
+  ASSERT_EQ(b.compare(a), 0);
+
+  a.tick = 100;
+  a.epsilon = 9;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_EQ(a.compare(b), -1);
+  ASSERT_EQ(b.compare(a), 1);
+
+  a.tick = 99;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  ASSERT_EQ(a.compare(b), -1);
+  ASSERT_EQ(b.compare(a), 1);
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 9;
+  ASSERT_EQ(a.compare(b), 1);
+  ASSERT_EQ(b.compare(a), -1);
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 99;
+  b.epsilon = 10;
+  ASSERT_EQ(a.compare(b), 1);
+  ASSERT_EQ(b.compare(a), -1);
 }
