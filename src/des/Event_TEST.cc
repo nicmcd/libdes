@@ -46,29 +46,43 @@ class MyModel : public des::Model {
 TEST(Event, constructor1) {
   des::Simulator sim;
   MyModel model(&sim);
-  des::Event e;
-  ASSERT_EQ(e.model, nullptr);
-  ASSERT_EQ(e.handler, nullptr);
-  ASSERT_TRUE(e.time ==  des::Time());
+  des::Event evt;
+  ASSERT_EQ(evt.model, nullptr);
+  ASSERT_EQ(evt.handler, nullptr);
+  ASSERT_TRUE(evt.time ==  des::Time());
 }
 
 TEST(Event, constructor2) {
   des::Simulator sim;
   MyModel model(&sim);
-  des::Event e(&model, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
-  ASSERT_EQ(e.model, &model);
-  ASSERT_EQ(e.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
-  ASSERT_TRUE(e.time == des::Time());
+  des::Event evt(&model,
+                 static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_EQ(evt.model, &model);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_TRUE(evt.time == des::Time());
 }
 
 TEST(Event, constructor3) {
   des::Simulator sim;
   MyModel model(&sim);
-  des::Event e(&model, static_cast<des::EventHandler>(&MyModel::ignoreEvent),
-               des::Time(123456789, 23));
-  ASSERT_EQ(e.model, &model);
-  ASSERT_EQ(e.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
-  ASSERT_TRUE(e.time == des::Time(123456789, 32));
+  des::Time etime(123456789, 23);
+  des::Event evt(&model,
+                 static_cast<des::EventHandler>(&MyModel::ignoreEvent),
+                 etime);
+  ASSERT_EQ(evt.model, &model);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_TRUE(evt.time == etime);
+}
+
+TEST(Event, constructor3b) {
+  des::Simulator sim;
+  MyModel model(&sim);
+  des::Event evt(&model,
+                 static_cast<des::EventHandler>(&MyModel::ignoreEvent),
+                 des::Time(123456789, 23));
+  ASSERT_EQ(evt.model, &model);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_TRUE(evt.time == des::Time(123456789, 23));
 }
 
 TEST(Event, eventCompare) {
