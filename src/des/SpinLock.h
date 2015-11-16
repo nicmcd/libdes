@@ -33,6 +33,10 @@
 
 #include <atomic>
 
+#if ATOMIC_BOOL_LOCK_FREE != 2
+#error "std::atomic<bool> is not lock-free in this implementation"
+#endif
+
 namespace des {
 
 class SpinLock {
@@ -44,7 +48,7 @@ class SpinLock {
   void unlock();
 
  private:
-  std::atomic_flag lock_;
+  std::atomic<bool> lock_;
 };
 
 }  // namespace des

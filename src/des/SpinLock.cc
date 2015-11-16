@@ -32,20 +32,22 @@
 
 namespace des {
 
-SpinLock::SpinLock() : lock_(ATOMIC_FLAG_INIT) {}
+SpinLock::SpinLock() : lock_(false) {}
 
 SpinLock::~SpinLock() {}
 
 void SpinLock::lock() {
-  while (lock_.test_and_set(std::memory_order_acquire)) {}  // spin
+  do {
+    while (lock_.load()) {}  // spin
+  } while (lock_.exchange(true, std::memory_order_acquire));
 }
 
 bool SpinLock::tryLock() {
-  return !lock_.test_and_set(std::memory_order_acquire);
+  return !lock_.exchange(true, std::memory_order_acquire);
 }
 
 void SpinLock::unlock() {
-  lock_.clear(std::memory_order_release);
+  lock_.store(false, std::memory_order_release);
 }
 
 }  // namespace des
