@@ -36,7 +36,7 @@ Logger::Logger() {}
 
 Logger::~Logger() {}
 
-void Logger::log(char* _message) {
+void Logger::log(const char* _message) {
   lock.lock();
   printf("%s", _message);
   lock.unlock();

@@ -39,7 +39,7 @@ class Logger {
  public:
   Logger();
   ~Logger();
-  void log(char* _message);
+  void log(const char* _message);
 
  private:
   std::mutex lock;
