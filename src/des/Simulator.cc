@@ -186,7 +186,7 @@ void Simulator::simulate(bool _logSummary) {
                        "%11lu events : %12lu ticks : %10.0f events/sec "
                        ": %4.2f events/tick : %8.0f ticks/sec\n",
                        currEventCount,
-                       time_.tick,
+                       time_.tick + 1,
                        intervalEvents / elapsedRealTime,
                        intervalEvents / static_cast<f64>(elapsedSimTicks),
                        elapsedSimTicks / static_cast<f64>(elapsedRealTime));
@@ -233,7 +233,7 @@ void Simulator::simulate(bool _logSummary) {
                      "Events per sim ticks:       %.3f\n"
                      "Sim ticks per real seconds: %.3f\n"
                      "\n",
-                     currEventCount, time_.tick, uniqueTimeSteps, runTime,
+                     currEventCount, time_.tick + 1, uniqueTimeSteps, runTime,
                      currEventCount / runTime,
                      currEventCount / static_cast<f64>(time_.tick),
                      time_.tick / runTime);
