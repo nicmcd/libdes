@@ -79,7 +79,7 @@ s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
   // format the line header
   res = snprintf(ptr, budget, "[%s] %s:%s:%i | ", _time.toString().c_str(),
                  _name, _func, _line);
-  assert((res > 0) && (res < budget));
+  assert((res >= 0) && (res < budget));
   ptr += res;
   budget -= res;
 
@@ -88,7 +88,7 @@ s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
   va_start(args, _format);
   res = vsnprintf(ptr, budget, _format, args);
   va_end(args);
-  assert((res > 0) && (res < budget));
+  assert((res >= 0) && (res < budget));
   ptr += res;
   budget -= res;
 
