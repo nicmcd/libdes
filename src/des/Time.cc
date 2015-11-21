@@ -30,6 +30,8 @@
  */
 #include "des/Time.h"
 
+#include <cassert>
+
 #include <sstream>
 
 namespace des {
@@ -95,13 +97,37 @@ s32 Time::compare(const Time& _o) const {
 }
 
 // NOLINTNEXTLINE(build/include_what_you_use)
-Time Time::min(const Time& a, const Time& b) {
-  return (a < b) ? a : b;
+Time Time::min(const Time& _a, const Time& _b) {
+  return (_a < _b) ? _a : _b;
 }
 
 // NOLINTNEXTLINE(build/include_what_you_use)
-Time Time::max(const Time& a, const Time& b) {
-  return (a > b) ? a : b;
+Time Time::max(const Time& _a, const Time& _b) {
+  return (_a > _b) ? _a : _b;
+}
+
+Time Time::operator+(const Time& _o) const {
+  Tick ntick = tick + _o.tick;
+  assert(ntick >= tick);  // detect overflow
+  return Time(ntick);
+}
+
+Time Time::operator+(Tick _tick) const {
+  Tick ntick = tick + _tick;
+  assert(ntick >= tick);  // detect overflow
+  return Time(ntick);
+}
+
+Time Time::operator-(const Time& _o) const {
+  Tick ntick = tick - _o.tick;
+  assert(ntick <= tick);  // detect underflow
+  return Time(ntick);
+}
+
+Time Time::operator-(Tick _tick) const {
+  Tick ntick = tick - _tick;
+  assert(ntick <= tick);  // detect underflow
+  return Time(ntick);
 }
 
 std::string Time::toString() const {

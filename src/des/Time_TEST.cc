@@ -324,3 +324,159 @@ TEST(Time, compare) {
   ASSERT_EQ(a.compare(b), 1);
   ASSERT_EQ(b.compare(a), -1);
 }
+
+TEST(Time, min) {
+  des::Time a;
+  des::Time b;
+  des::Time c;
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  c = des::Time::min(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 10u);
+
+  a.tick = 100;
+  a.epsilon = 9;
+  b.tick = 100;
+  b.epsilon = 10;
+  c = des::Time::min(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 9u);
+
+  a.tick = 99;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  c = des::Time::min(a, b);
+  ASSERT_EQ(c.tick, 99u);
+  ASSERT_EQ(c.epsilon, 10u);
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 9;
+  c = des::Time::min(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 9u);
+
+  a.tick = 100;
+  a.epsilon = 2;
+  b.tick = 99;
+  b.epsilon = 10;
+  c = des::Time::min(a, b);
+  ASSERT_EQ(c.tick, 99u);
+  ASSERT_EQ(c.epsilon, 10u);
+}
+
+TEST(Time, max) {
+  des::Time a;
+  des::Time b;
+  des::Time c;
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  c = des::Time::max(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 10u);
+
+  a.tick = 100;
+  a.epsilon = 9;
+  b.tick = 100;
+  b.epsilon = 10;
+  c = des::Time::max(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 10u);
+
+  a.tick = 99;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 10;
+  c = des::Time::max(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 10u);
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 100;
+  b.epsilon = 9;
+  c = des::Time::max(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 10u);
+
+  a.tick = 100;
+  a.epsilon = 10;
+  b.tick = 99;
+  b.epsilon = 11;
+  c = des::Time::max(a, b);
+  ASSERT_EQ(c.tick, 100u);
+  ASSERT_EQ(c.epsilon, 10u);
+}
+
+TEST(Time, plus) {
+  des::Time a;
+  des::Time b;
+  des::Time c;
+
+  a.tick = 50;
+  a.epsilon = 6;
+  b.tick = 15;
+  b.epsilon = 7;
+  c = a + b;
+  ASSERT_EQ(c.tick, 65u);
+  ASSERT_EQ(c.epsilon, 0u);
+
+  a.tick = 5;
+  a.epsilon = 1;
+  b.tick = 89;
+  b.epsilon = 2;
+  c = a + b;
+  ASSERT_EQ(c.tick, 94u);
+  ASSERT_EQ(c.epsilon, 0u);
+
+  a.tick = 5;
+  a.epsilon = 1;
+  c = a + 10;
+  ASSERT_EQ(c.tick, 15u);
+  ASSERT_EQ(c.epsilon, 0u);
+}
+
+TEST(Time, minus) {
+  des::Time a;
+  des::Time b;
+  des::Time c;
+
+  a.tick = 50;
+  a.epsilon = 6;
+  b.tick = 15;
+  b.epsilon = 7;
+  c = a - b;
+  ASSERT_EQ(c.tick, 35u);
+  ASSERT_EQ(c.epsilon, 0u);
+
+  a.tick = 105;
+  a.epsilon = 1;
+  b.tick = 89;
+  b.epsilon = 2;
+  c = a - b;
+  ASSERT_EQ(c.tick, 16u);
+  ASSERT_EQ(c.epsilon, 0u);
+
+  a.tick = 34;
+  a.epsilon = 1;
+  c = a - 10;
+  ASSERT_EQ(c.tick, 24u);
+  ASSERT_EQ(c.epsilon, 0u);
+}
+
+TEST(Time, toString) {
+  ASSERT_EQ(des::Time(50, 67).toString(), "50:67");
+  ASSERT_EQ(des::Time(43).toString(), "43:0");
+  ASSERT_EQ(des::Time().toString(), std::to_string(des::TICK_INV) +
+            ':' + std::to_string(des::EPSILON_INV));
+  ASSERT_EQ(des::Time(199, 201).toString(), "199:201");
+}

@@ -71,8 +71,14 @@ class Time {
   s32 compare(const Time& _o) const;
 
   // helper min/max functions
-  static Time min(const Time& a, const Time& b);  // NOLINT
-  static Time max(const Time& a, const Time& b);  // NOLINT
+  static Time min(const Time& _a, const Time& _b);  // NOLINT
+  static Time max(const Time& _a, const Time& _b);  // NOLINT
+
+  // these operators perform time arithmetic (on tick)
+  Time operator+(const Time& _o) const;
+  Time operator+(Tick _tick) const;
+  Time operator-(const Time& _o) const;
+  Time operator-(Tick _tick) const;
 
   // misc helper functions
   std::string toString() const;
