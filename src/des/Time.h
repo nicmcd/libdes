@@ -75,10 +75,10 @@ class Time {
   static Time max(const Time& _a, const Time& _b);  // NOLINT
 
   // these operators perform time arithmetic (on tick)
-  Time operator+(const Time& _o) const;
-  Time operator+(Tick _tick) const;
-  Time operator-(const Time& _o) const;
-  Time operator-(Tick _tick) const;
+  Tick operator+(const Time& _o) const;
+  Tick operator+(Tick _tick) const;
+  Tick operator-(const Time& _o) const;
+  Tick operator-(Tick _tick) const;
 
   // misc helper functions
   std::string toString() const;
