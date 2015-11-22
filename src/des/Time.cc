@@ -136,4 +136,8 @@ std::string Time::toString() const {
   return ss.str();
 }
 
+bool Time::valid() const {
+  return tick != TICK_INV && epsilon != EPSILON_INV;
+}
+
 }  // namespace des

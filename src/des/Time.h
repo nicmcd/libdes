@@ -82,6 +82,7 @@ class Time {
 
   // misc helper functions
   std::string toString() const;
+  bool valid() const;
 
   Tick tick;
   Epsilon epsilon;

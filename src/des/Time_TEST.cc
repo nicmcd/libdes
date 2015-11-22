@@ -474,3 +474,14 @@ TEST(Time, toString) {
             ':' + std::to_string(des::EPSILON_INV));
   ASSERT_EQ(des::Time(199, 201).toString(), "199:201");
 }
+
+TEST(Time, valid) {
+  des::Time t;
+  ASSERT_FALSE(t.valid());
+  t.tick = 0;
+  ASSERT_FALSE(t.valid());
+  t.epsilon = 0;
+  ASSERT_TRUE(t.valid());
+  t.tick = des::TICK_INV;
+  ASSERT_FALSE(t.valid());
+}
