@@ -130,6 +130,11 @@ Tick Time::operator-(Tick _tick) const {
   return ntick;
 }
 
+Time Time::plusEps() const {
+  assert(epsilon < EPSILON_INV);
+  return Time(tick, epsilon + 1);
+}
+
 std::string Time::toString() const {
   std::stringstream ss;
   ss << static_cast<u64>(tick) << ':' << static_cast<u64>(epsilon);

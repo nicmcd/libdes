@@ -467,6 +467,16 @@ TEST(Time, minus) {
   ASSERT_EQ(c, 24u);
 }
 
+TEST(Time, plusEps) {
+  des::Time a;
+
+  a.tick = 34;
+  a.epsilon = 1;
+  des::Time b = a.plusEps();
+  ASSERT_EQ(b, des::Time(34, 2));
+  ASSERT_EQ(a, des::Time(34, 1));
+}
+
 TEST(Time, toString) {
   ASSERT_EQ(des::Time(50, 67).toString(), "50:67");
   ASSERT_EQ(des::Time(43).toString(), "43:0");

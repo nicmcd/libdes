@@ -80,6 +80,9 @@ class Time {
   Tick operator-(const Time& _o) const;
   Tick operator-(Tick _tick) const;
 
+  // these functions modify epsilon
+  Time plusEps() const;
+
   // misc helper functions
   std::string toString() const;
   bool valid() const;
