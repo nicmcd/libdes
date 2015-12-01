@@ -44,6 +44,25 @@ TEST(Time, constructor2) {
   ASSERT_EQ(t.epsilon, 0u);
 }
 
+TEST(Time, constructor2_implicit) {
+  des::Time s;
+  ASSERT_EQ(s.tick, des::TICK_INV);
+  ASSERT_EQ(s.epsilon, des::EPSILON_INV);
+
+  s = 123;
+  ASSERT_EQ(s.tick, 123u);
+  ASSERT_EQ(s.epsilon, 0);
+
+  s.epsilon = 230;
+  s = 199;
+  ASSERT_EQ(s.tick, 199u);
+  ASSERT_EQ(s.epsilon, 0);
+
+  des::Time t = (des::Tick)5;
+  ASSERT_EQ(t.tick, 5u);
+  ASSERT_EQ(t.epsilon, 0);
+}
+
 TEST(Time, constructor3) {
   des::Time t(12345678, 89);
   ASSERT_EQ(t.tick, 12345678u);
@@ -61,7 +80,7 @@ TEST(Time, copyconstructor) {
   ASSERT_EQ(s.epsilon, 89u);
 }
 
-TEST(Time, assignmentoperator) {
+TEST(Time, assignmentoperator1) {
   des::Time t(12345678, 89);
   des::Time s;
   s = t;

@@ -50,7 +50,7 @@ class Time {
   Time();
 
   // initializes tick as specified, epsilon to zero
-  explicit Time(Tick _tick);
+  Time(Tick _tick);  // NOLINT
 
   // initializes tick as specified, epsilon as specified
   Time(Tick _tick, Epsilon _epsilon);
@@ -58,7 +58,7 @@ class Time {
   // copy constructor
   Time(const Time& _o);
 
-  // assignment operator
+  // assignment operators
   Time& operator=(const Time& o);
 
   // comparison operators
