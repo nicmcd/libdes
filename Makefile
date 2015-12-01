@@ -26,7 +26,7 @@ CXX_FLAGS     := -std=c++11 -Wall -Wextra -pedantic -Wfatal-errors
 CXX_FLAGS     += -march=native -g -O3 -flto
 CXX_FLAGS     += -pthread
 #CXX_FLAGS     += -DNDEBUGLOG
-LINK_FLAGS    := -lpthread -Wl,--no-as-needed
+LINK_FLAGS    := -lz -lpthread -Wl,--no-as-needed
 
 #--------------------- Auto Makefile ------------------------------------------#
 include ~/.makeccpp/auto_lib.mk

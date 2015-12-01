@@ -191,7 +191,7 @@ void Simulator::simulate(bool _logSummary) {
                        intervalEvents / static_cast<f64>(elapsedSimTicks),
                        elapsedSimTicks / static_cast<f64>(elapsedRealTime));
       assert(r > 0 && r < (s32)STATS_SIZE);
-      logger_->log(statsString);
+      logger_->log(statsString, r);
 
       lastSimTicks = time_.tick;
       lastRealTime = realTime;
@@ -238,7 +238,7 @@ void Simulator::simulate(bool _logSummary) {
                      currEventCount / static_cast<f64>(time_.tick),
                      time_.tick / runTime);
     assert(r > 0 && r < (s32)STATS_SIZE);
-    logger_->log(statsString);
+    logger_->log(statsString, r);
   }
 
   // clean up the stats string buffer

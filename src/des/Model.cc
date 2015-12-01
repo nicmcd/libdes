@@ -96,9 +96,10 @@ s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
   assert(budget >= 2);
   ptr[0] = '\n';
   ptr[1] = '\0';
+  ptr += 2;
 
   // give string to logger to print
-  _logger->log(buf);
+  _logger->log(buf, ptr - buf);
 
   // delete the buffer and return succesfully
   delete[] buf;

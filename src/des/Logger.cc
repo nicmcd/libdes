@@ -30,16 +30,60 @@
  */
 #include "des/Logger.h"
 
+#include <cassert>
+
 namespace des {
 
-Logger::Logger() {}
+Logger::Logger()
+    : Logger("-") {}
 
-Logger::~Logger() {}
+Logger::Logger(const std::string& _filename) {
+  if (_filename == "-") {
+    close_ = false;
+    compress_ = false;
+    regFile_ = stdout;
+  } else if (_filename == "+") {
+    close_ = false;
+    compress_ = false;
+    regFile_ = stderr;
+  } else if (_filename.size() >= 3 &&
+             _filename.substr(_filename.size() - 3) == ".gz") {
+    close_ = true;
+    compress_ = true;
+    gzFile_ = gzopen(_filename.c_str(), "wb");
+    if (!gzFile_) {
+      fprintf(stderr, "couldn't open gz file: %s\n", _filename.c_str());
+      exit(-1);
+    }
+  } else {
+    close_ = true;
+    compress_ = false;
+    regFile_ = fopen(_filename.c_str(), "wb");
+    if (!regFile_) {
+      fprintf(stderr, "couldn't open regular file: %s\n", _filename.c_str());
+      exit(-1);
+    }
+  }
+}
 
-void Logger::log(const char* _message) {
-  lock.lock();
-  printf("%s", _message);
-  lock.unlock();
+Logger::~Logger() {
+  if (close_) {
+    if (compress_) {
+      gzclose(gzFile_);
+    } else {
+      fclose(regFile_);
+    }
+  }
+}
+
+void Logger::log(const char* _message, u64 _len) {
+  lock_.lock();
+  if (compress_) {
+    assert(gzwrite(gzFile_, _message, _len) == (s64)_len);
+  } else {
+    assert(fwrite(_message, sizeof(char), _len, regFile_) == _len);
+  }
+  lock_.unlock();
 }
 
 }  // namespace des

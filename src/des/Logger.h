@@ -31,18 +31,29 @@
 #ifndef DES_LOGGER_H_
 #define DES_LOGGER_H_
 
+#include <prim/prim.h>
+#include <zlib.h>
+
 #include <mutex>
+#include <string>
 
 namespace des {
 
 class Logger {
  public:
+  // prints to stdout
   Logger();
+  // "-" to stdout, "+" to stderr, "*.gz" to gzip file, regular file otherwise
+  explicit Logger(const std::string& _filename);
   ~Logger();
-  void log(const char* _message);
+  void log(const char* _message, u64 _len);
 
  private:
-  std::mutex lock;
+  bool close_;
+  bool compress_;
+  FILE* regFile_;
+  gzFile gzFile_;
+  std::mutex lock_;
 };
 
 }  // namespace des
