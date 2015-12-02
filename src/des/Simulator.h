@@ -62,6 +62,7 @@ class Simulator {
 
   // logging
   Logger* getLogger() const;
+  void setLogger(Logger* _logger);
 
   // models and debugging
   void addModel(Model* _model);

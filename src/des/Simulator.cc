@@ -71,14 +71,12 @@ Simulator::Simulator(u32 _numThreads)
     bool direct = id == 0;
     std::get<0>(executers_.at(id)) = new Executer(this, id, direct);
   }
-  logger_ = new Logger();
 }
 
 Simulator::~Simulator() {
   for (auto& e : executers_) {
     delete std::get<0>(e);
   }
-  delete logger_;
 }
 
 Time Simulator::time() const {
@@ -171,7 +169,7 @@ void Simulator::simulate(bool _logSummary) {
     }
 
     // optionally print statistics
-    if (showStats_) {
+    if (logger_ && showStats_) {
       showStats_ = false;
 
       std::chrono::steady_clock::time_point realTime =
@@ -213,7 +211,7 @@ void Simulator::simulate(bool _logSummary) {
     exe->stop();
   }
 
-  if (_logSummary) {
+  if (logger_ && _logSummary) {
     // print statistic totals
     std::chrono::steady_clock::time_point realTime =
         std::chrono::steady_clock::now();
@@ -247,6 +245,10 @@ void Simulator::simulate(bool _logSummary) {
 
 Logger* Simulator::getLogger() const {
   return logger_;
+}
+
+void Simulator::setLogger(Logger* _logger) {
+  logger_ = _logger;
 }
 
 void Simulator::addModel(Model* _model) {

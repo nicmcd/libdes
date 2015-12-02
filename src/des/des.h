@@ -33,6 +33,7 @@
 
 #include "des/ClockedModel.h"
 #include "des/Event.h"
+#include "des/Logger.h"
 #include "des/Model.h"
 #include "des/Simulator.h"
 #include "des/SpinLock.h"
