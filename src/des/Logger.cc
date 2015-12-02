@@ -58,7 +58,7 @@ Logger::Logger(const std::string& _filename) {
   } else {
     close_ = true;
     compress_ = false;
-    regFile_ = fopen(_filename.c_str(), "wb");
+    regFile_ = fopen(_filename.c_str(), "w");
     if (!regFile_) {
       fprintf(stderr, "couldn't open regular file: %s\n", _filename.c_str());
       exit(-1);

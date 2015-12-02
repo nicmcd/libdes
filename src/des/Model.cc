@@ -99,7 +99,7 @@ s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
   ptr += 2;
 
   // give string to logger to print
-  _logger->log(buf, ptr - buf);
+  _logger->log(buf, ptr - buf - 1);
 
   // delete the buffer and return succesfully
   delete[] buf;
