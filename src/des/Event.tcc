@@ -29,53 +29,35 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef DES_EVENT_H_
-#define DES_EVENT_H_
+#error "Do not include this .tcc file directly, use the .h file instead"
+#else
 
-#include "des/Time.h"
-
-namespace des {
-
-class Model;
-
-// This defines an event handler function pointer.
-class Event;
-typedef void (Model::*EventHandler)(Event*);
-
-// This is the base class for all events.
-class Event {
- public:
-  Event();
-  Event(Model* _model, EventHandler _handler);
-  Event(Model* _model, EventHandler _handler, Time _time);
-  virtual ~Event();
-
-  Model* model;
-  EventHandler handler;
-  Time time;
-};
-
-// This defines a comparator object for comparing events.
-class EventComparator {
- public:
-  bool operator()(const Event* _lhs, const Event* _rhs) const;
-};
-
-// This is a simple template class to contain a single item in an event
 template <typename T>
-class ItemEvent : public Event {
- public:
-  ItemEvent();
-  explicit ItemEvent(T _item);
-  ItemEvent(Model* _model, EventHandler _handler);
-  ItemEvent(Model* _model, EventHandler _handler, T _item);
-  ItemEvent(Model* _model, EventHandler _handler, Time _time);
-  ItemEvent(Model* _model, EventHandler _handler, Time _time, T _item);
-  ~ItemEvent();
-  T item;
-};
+ItemEvent<T>::ItemEvent()
+    : Event() {}
 
-#include "Event.tcc"
+template <typename T>
+ItemEvent<T>::ItemEvent(T _item)
+    : Event(), item(_item) {}
 
-}  // namespace des
+template <typename T>
+ItemEvent<T>::ItemEvent(Model* _model, EventHandler _handler)
+    : Event(_model, _handler) {}
+
+template <typename T>
+ItemEvent<T>::ItemEvent(Model* _model, EventHandler _handler, T _item)
+    : Event(_model, _handler), item(_item) {}
+
+template <typename T>
+ItemEvent<T>::ItemEvent(Model* _model, EventHandler _handler, Time _time)
+    : Event(_model, _handler, _time) {}
+
+template <typename T>
+ItemEvent<T>::ItemEvent(Model* _model, EventHandler _handler, Time _time,
+                        T _item)
+    : Event(_model, _handler, _time), item(_item) {}
+
+template <typename T>
+ItemEvent<T>::~ItemEvent() {}
 
 #endif  // DES_EVENT_H_

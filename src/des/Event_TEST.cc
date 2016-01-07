@@ -111,3 +111,15 @@ TEST(Event, eventCompare) {
   e2.time = des::Time(100, 1);
   ASSERT_FALSE(comp(&e1, &e2));
 }
+
+TEST(Event, item) {
+  des::Simulator sim;
+  MyModel model(&sim);
+  des::ItemEvent<u32> evt(
+      &model, static_cast<des::EventHandler>(&MyModel::ignoreEvent),
+      des::Time(123456789, 23), 0xDEAFBEEF);
+  ASSERT_EQ(evt.model, &model);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_TRUE(evt.time == des::Time(123456789, 23));
+  ASSERT_EQ(evt.item, 0xDEAFBEEF);
+}
