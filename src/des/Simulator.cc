@@ -50,14 +50,15 @@ Simulator::Simulator()
 
 Simulator::Simulator(u32 _numThreads)
     : time_(0, 0), logger_(nullptr), showStats_(false) {
+  // configure number of threads in this simulator
+  u32 hwThreads = std::thread::hardware_concurrency();
   if (_numThreads == 0) {
-    _numThreads = std::thread::hardware_concurrency();
+    _numThreads = hwThreads;
     if (_numThreads == 0) {
       _numThreads = 1;
     }
   }
-
-  if (_numThreads > std::thread::hardware_concurrency()) {
+  if ((hwThreads > 0) && (_numThreads > hwThreads)) {
     fprintf(stderr,
             "*************************************************************\n"
             "* WARNING WARNING WARNING WARNING WARNING WARNING WARNING   *\n"
@@ -66,6 +67,7 @@ Simulator::Simulator(u32 _numThreads)
             "*************************************************************\n");
   }
 
+  // create all executers
   executers_.resize(_numThreads);
   for (u32 id = 0; id < _numThreads; id++) {
     bool direct = id == 0;
@@ -158,7 +160,7 @@ void Simulator::simulate(bool _logSummary) {
       }
     }
 
-    // execute the direct executer directly
+    // execute the direct executer in this thread
     {
       auto& e = executers_.at(0);
       Executer* exe = std::get<0>(e);
