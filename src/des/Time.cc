@@ -130,6 +130,46 @@ Tick Time::operator-(Tick _tick) const {
   return ntick;
 }
 
+Time& Time::operator+=(const Time& _o) {
+  if (_o.tick > 0) {
+    Tick ntick = tick + _o.tick;
+    assert(ntick >= tick);  // detect overflow
+    tick = ntick;
+    epsilon = 0;
+  }
+  return *this;
+}
+
+Time& Time::operator+=(Tick _tick) {
+  if (_tick > 0) {
+    Tick ntick = tick + _tick;
+    assert(ntick >= tick);  // detect overflow
+    tick = ntick;
+    epsilon = 0;
+  }
+  return *this;
+}
+
+Time& Time::operator-=(const Time& _o) {
+  if (_o.tick > 0) {
+    Tick ntick = tick - _o.tick;
+    assert(ntick <= tick);  // detect underflow
+    tick = ntick;
+    epsilon = 0;
+  }
+  return *this;
+}
+
+Time& Time::operator-=(Tick _tick) {
+  if (_tick > 0) {
+    Tick ntick = tick - _tick;
+    assert(ntick <= tick);  // detect underflow
+    tick = ntick;
+    epsilon = 0;
+  }
+  return *this;
+}
+
 Time Time::plusEps() const {
   assert(epsilon < EPSILON_INV);
   return Time(tick, epsilon + 1);

@@ -80,6 +80,12 @@ class Time {
   Tick operator-(const Time& _o) const;
   Tick operator-(Tick _tick) const;
 
+  // these are inplace modifiers
+  Time& operator+=(const Time& _o);
+  Time& operator+=(Tick _tick);
+  Time& operator-=(const Time& _o);
+  Time& operator-=(Tick _tick);
+
   // these functions modify epsilon
   Time plusEps() const;
 
