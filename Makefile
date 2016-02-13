@@ -29,4 +29,4 @@ CXX_FLAGS     += -pthread
 LINK_FLAGS    := -lz -lpthread -Wl,--no-as-needed
 
 #--------------------- Auto Makefile ------------------------------------------#
-include ~/.makeccpp/auto_lib.mk
+include $(HOME)/.makeccpp/auto_lib.mk
