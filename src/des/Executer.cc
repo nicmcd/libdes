@@ -123,6 +123,9 @@ void Executer::run() {
     if (stop_) {
       break;
     }
+
+    // make this spin-wait more efficient
+    asm volatile("pause\n": : :"memory");
   }
 
   // running FSM

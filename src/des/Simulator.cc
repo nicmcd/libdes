@@ -202,7 +202,10 @@ void Simulator::simulate(bool _logSummary) {
     for (u32 id = 1; id < executers_.size(); id++) {
       auto& e = executers_.at(id);
       Executer* exe = std::get<0>(e);
-      while (exe->executing()) {}
+      while (exe->executing()) {
+        // make this spin-wait more efficient
+        asm volatile("pause\n": : :"memory");
+      }
     }
   }
 
