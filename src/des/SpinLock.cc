@@ -32,7 +32,13 @@
 
 namespace des {
 
-SpinLock::SpinLock() : lock_(false) {}
+SpinLock::SpinLock()
+    : lock_(false) {}
+
+SpinLock::SpinLock(const SpinLock& _o)
+    : lock_(false) {
+  (void)_o;  // unused
+}
 
 SpinLock::~SpinLock() {}
 

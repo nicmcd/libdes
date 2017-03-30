@@ -28,55 +28,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ClockedModel.h"
+#ifndef DES_CACHELINE_UTIL_H_
+#define DES_CACHELINE_UTIL_H_
 
-#include <cassert>
+#include <prim/prim.h>
 
-#include "des/Simulator.h"
+const u64 CACHELINE_SIZE = 64;  // todo(nic): is there a portable way?
 
-namespace des {
-
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent)
-    : ClockedModel(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
-                   _parent->cyclePhase_) {}
-
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
-                   _cyclePhase) {}
-
-ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : Model(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
+// compute cache line padding size
+constexpr u64 CLPAD(u64 _objSize) {
+  return ((_objSize / CACHELINE_SIZE) * CACHELINE_SIZE) +
+      (((_objSize % CACHELINE_SIZE) > 0) * CACHELINE_SIZE) -
+      _objSize;
 }
 
-ClockedModel::~ClockedModel() {}
-
-Tick ClockedModel::cyclePeriod() const {
-  return cyclePeriod_;
-}
-
-Tick ClockedModel::cyclePhase() const {
-  return cyclePhase_;
-}
-
-Tick ClockedModel::futureCycle(u32 _cycles) const {
-  assert(_cycles > 0);
-  Tick tick = simulator->time().tick();
-  Tick rem = tick % cyclePeriod_;
-  if (rem != cyclePhase_) {
-    tick += (cyclePhase_ - rem);
-    if (rem > cyclePhase_) {
-      tick += cyclePeriod_;
-    }
-    _cycles--;
-  }
-  return tick + (cyclePeriod_ * _cycles);
-}
-
-}  // namespace des
+#endif  // DES_CACHELINE_UTIL_H_

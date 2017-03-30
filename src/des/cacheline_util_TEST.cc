@@ -28,61 +28,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EXECUTER_H_
-#define DES_EXECUTER_H_
+#include "des/cacheline_util.h"
 
+#include <gtest/gtest.h>
 #include <prim/prim.h>
 
-#include <atomic>
-#include <queue>
-#include <thread>
-#include <vector>
+TEST(cacheline_util, CLPAD_Logic) {
+  ASSERT_EQ(CLPAD(1), CACHELINE_SIZE - 1);
+  ASSERT_EQ(CLPAD(2 * CACHELINE_SIZE), 0u);
+  ASSERT_EQ(CLPAD(2 * CACHELINE_SIZE + 1), CACHELINE_SIZE - 1);
+  ASSERT_EQ(CLPAD(3 * CACHELINE_SIZE - 1), 1u);
+}
 
-#include "des/Event.h"
-#include "des/SpinLock.h"
-
-namespace des {
-
-class Simulator;
-
-class Executer {
- public:
-  struct QueueStats {
-    u64 size;
-    Time nextTime;
+TEST(cacheline_util, CLPAD_Use) {
+  struct alignas(64) AlignedAndPaddedU64 {
+    u64 num;
+    char pad[CLPAD(sizeof(num))];
   };
+  AlignedAndPaddedU64 aapu64;
+  u64 u;
 
-  Executer(Simulator* _simulator, u32 _id, bool _direct);
-  ~Executer();
+  // write
+  aapu64.num = 0xABCDABCDABCDABCDllu;
+  for (char& c : aapu64.pad) {
+    c = 0;
+  }
+  u = 0xCDABCDABCDABCDABllu;;
 
-  void start();
-  void stop();
-  bool running() const;
-  void addEvent(Event* _event);
-  QueueStats queueStats();
-  void execute();
-  bool executing() const;
-  u64 executed() const;  // only safe to call during !executing()
+  // check
+  ASSERT_EQ(aapu64.num, 0xABCDABCDABCDABCDllu);
+  for (char& c : aapu64.pad) {
+    ASSERT_EQ(c, 0);
+  }
+  ASSERT_EQ(u, 0xCDABCDABCDABCDABllu);
 
- private:
-  void run();
-  void timeStep();
-
-  Simulator* simulator_;
-  u32 id_;
-  bool direct_;
-
-  std::thread thread_;
-  std::atomic<bool> stop_;
-  std::atomic<bool> running_;
-  std::atomic<bool> executing_;
-
-  std::priority_queue<Event*, std::vector<Event*>, EventComparator> queue_;
-  SpinLock queueLock_;
-
-  u64 executed_;
-};
-
-}  // namespace des
-
-#endif  // DES_EXECUTER_H_
+  // size and address
+  ASSERT_EQ(sizeof(aapu64), CACHELINE_SIZE);
+  auto* ptr = &aapu64;
+  u64 mod = reinterpret_cast<u64>(ptr) % CACHELINE_SIZE;
+  ASSERT_EQ(mod, 0u);
+}

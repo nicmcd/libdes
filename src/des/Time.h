@@ -35,13 +35,12 @@
 
 #include <string>
 
+#include "des/timeconf.h"
+
 namespace des {
 
-// these define the size and bounds of time fields
 typedef u64 Tick;
-static const Tick TICK_INV = U64_MAX;
-typedef u8 Epsilon;
-static const Epsilon EPSILON_INV = U8_MAX;
+typedef u64 Epsilon;
 
 // this class handles the bulk of time operations
 class Time {
@@ -61,6 +60,17 @@ class Time {
   // assignment operators
   Time& operator=(const Time& o);
 
+  // manual creation using a timestep
+  static Time create(TimeStep _timeStep);
+
+  // get Tick and Epsilon values
+  Tick tick() const;
+  Epsilon epsilon() const;
+
+  // set Tick and Epsilon values
+  void setTick(Tick _tick);
+  void setEpsilon(Epsilon _epsilon);
+
   // comparison operators
   bool operator==(const Time& _o) const;
   bool operator!=(const Time& _o) const;
@@ -75,10 +85,10 @@ class Time {
   static Time max(const Time& _a, const Time& _b);  // NOLINT
 
   // these operators perform time arithmetic (on tick)
-  Tick operator+(const Time& _o) const;
-  Tick operator+(Tick _tick) const;
-  Tick operator-(const Time& _o) const;
-  Tick operator-(Tick _tick) const;
+  Time operator+(const Time& _o) const;
+  Time operator+(Tick _tick) const;
+  Time operator-(const Time& _o) const;
+  Time operator-(Tick _tick) const;
 
   // these are inplace modifiers
   Time& operator+=(const Time& _o);
@@ -87,14 +97,18 @@ class Time {
   Time& operator-=(Tick _tick);
 
   // these functions modify epsilon
-  Time plusEps() const;
+  Time nextEpsilon() const;
+  void incrEpsilon();
 
   // misc helper functions
   std::string toString() const;
   bool valid() const;
 
-  Tick tick;
-  Epsilon epsilon;
+  // retrieve the raw time step value
+  TimeStep raw() const;
+
+ private:
+  TimeStep timeStep_;
 };
 
 }  // namespace des

@@ -28,55 +28,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ClockedModel.h"
+#ifndef DES_TIMECONF_H_
+#define DES_TIMECONF_H_
 
-#include <cassert>
+#include <prim/prim.h>
 
-#include "des/Simulator.h"
+#include <climits>
 
 namespace des {
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent)
-    : ClockedModel(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
-                   _parent->cyclePhase_) {}
+// this is the only thing that should ever be changed in this file
+static const u64 EPSILON_BITS = 4;
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
-                   _cyclePhase) {}
-
-ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : Model(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
-}
-
-ClockedModel::~ClockedModel() {}
-
-Tick ClockedModel::cyclePeriod() const {
-  return cyclePeriod_;
-}
-
-Tick ClockedModel::cyclePhase() const {
-  return cyclePhase_;
-}
-
-Tick ClockedModel::futureCycle(u32 _cycles) const {
-  assert(_cycles > 0);
-  Tick tick = simulator->time().tick();
-  Tick rem = tick % cyclePeriod_;
-  if (rem != cyclePhase_) {
-    tick += (cyclePhase_ - rem);
-    if (rem > cyclePhase_) {
-      tick += cyclePeriod_;
-    }
-    _cycles--;
-  }
-  return tick + (cyclePeriod_ * _cycles);
-}
+// DO NOT EDIT BELOW THIS
+static_assert(EPSILON_BITS > 0 && EPSILON_BITS < 64, "Invalid EPSILON_BITS");
+typedef u64 TimeStep;
+static const u64 TIMESTEP_INV = ~0;
+static const u64 TIMESTEP_BITS = sizeof(TimeStep) * CHAR_BIT;
+static const u64 EPSILON_INV = (1lu << EPSILON_BITS) - 1;
+static const u64 TICK_BITS = TIMESTEP_BITS - EPSILON_BITS;
+static const u64 TICK_INV = (1lu << TICK_BITS) - 1;
 
 }  // namespace des
+
+#endif  // DES_TIMECONF_H_

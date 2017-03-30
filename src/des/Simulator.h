@@ -34,29 +34,104 @@
 #include <prim/prim.h>
 
 #include <atomic>
+#include <chrono>
+#include <queue>
 #include <string>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
-#include "des/Executer.h"
+#include "des/cacheline_util.h"
+#include "des/Event.h"
+#include "des/SpinLock.h"
 #include "des/Time.h"
 
 namespace des {
 
-class Event;
 class Model;
 class Logger;
+
+// these variables are read/write shared variables for the executers
+//  these are cache line aligned and padded individually
+struct alignas(CACHELINE_SIZE) SimState {
+  // this variable tells the executers to continue
+  std::atomic<bool> running;
+  char padding1[CLPAD(sizeof(running))];
+
+  // this variable is the current time of execution
+  TimeStep timeStep;
+  char padding2[CLPAD(sizeof(timeStep))];
+
+  // this variable is used by the executors to determine which epoch they are
+  //  currently working in
+  std::atomic<bool> epoch;
+  char padding3[CLPAD(sizeof(epoch))];
+
+  // this variable tracks how many executors have not yet hit the timestep
+  //  barrier in the current epoch
+  std::atomic<u32> yetToArrive;
+  char padding4[CLPAD(sizeof(yetToArrive))];
+
+  // this variable tracks the next time step to be used by epoch
+  std::atomic<TimeStep> nextTimeStep[2];
+  char padding5[CLPAD(sizeof(nextTimeStep))];
+
+  // this variable is a flag to show statistics
+  std::atomic<bool> showStats;
+  char padding6[CLPAD(sizeof(showStats))];
+
+  // this variable counts total number of executed events
+  std::atomic<u64> eventCount;
+  char padding7[CLPAD(sizeof(eventCount))];
+
+  // this variable counts total number of executed time steps
+  u64 timeStepCount;
+  char padding8[CLPAD(sizeof(timeStepCount))];
+
+  // this variable counts total number of executed ticks
+  u64 tickCount;
+  char padding9[CLPAD(sizeof(tickCount))];
+};
+
+// this defines the type of queue used for events
+typedef std::priority_queue<Event*, std::vector<Event*>,
+                            EventComparator> EventQueue;
+
+// these variables are for accessing the event queues safely
+//  these are cache line aligned and padded individually
+struct alignas(CACHELINE_SIZE) EventQueueAndLock {
+  // this variable is an EventQueue
+  EventQueue queue;
+  char padding1[CLPAD(sizeof(queue))];
+
+  // this variable is the lock associated with the queue
+  SpinLock lock;
+  char padding2[CLPAD(sizeof(lock))];
+};
+
+// this structure contains variables that track performance statistics
+/*
+struct SimStats {
+  u64 uniqueTimeSteps;
+  u64 eventCount;
+  u64 intervalEvents;
+  Tick lastReportedTick;
+  std::chrono::steady_clock::time_point startTime;
+  std::chrono::steady_clock::time_point lastRealTime;
+  };*/
 
 class Simulator {
  public:
   Simulator();
   explicit Simulator(u32 _numThreads);
-  ~Simulator();
+  virtual ~Simulator();
+
+  // general info
+  u32 threads() const;
+  Time time() const;
 
   // events and event handling
-  Time time() const;
   void addEvent(Event* _event);
   void simulate(bool _logSummary);
 
@@ -75,19 +150,25 @@ class Simulator {
   // this triggers one statistics output in the logger
   void showStats();
 
- private:
-  std::vector<std::tuple<Executer*, Executer::QueueStats> > executers_;
+ protected:
+  // this is used for subclasses to generate thread specific data structures
+  u32 threadId() const;
 
-  // following variable holds the simulator's time
-  Time time_;
+ private:
+  // this is the function that gets called per executer thread
+  void executer(u32 _id);
+
+  // info
+  u32 numThreads_;
+  SimState simState_;
+
+  // per-thread variables
+  std::vector<EventQueueAndLock> queueAndLocks_;
 
   // this is a logger for the entire simulation framework
   Logger* logger_;
 
-  // trigger to show stats
-  volatile bool showStats_;
-
-  // models and debugging
+  // models and debugging names
   std::unordered_map<std::string, Model*> models_;
   std::unordered_set<std::string> toBeDebugged_;
 };

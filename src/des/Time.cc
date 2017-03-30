@@ -37,59 +37,78 @@
 namespace des {
 
 Time::Time()
-    : Time(TICK_INV, EPSILON_INV) {}
+    : timeStep_(~0) {}
 
 Time::Time(Tick _tick)
     : Time(_tick, 0) {}
 
-Time::Time(Tick _tick, Epsilon _epsilon)
-    : tick(_tick), epsilon(_epsilon) {}
+Time::Time(Tick _tick, Epsilon _epsilon) {
+  assert(_tick <= TICK_INV);
+  assert(_epsilon <= EPSILON_INV);
+  timeStep_ = _tick << EPSILON_BITS;
+  timeStep_ |= _epsilon;
+}
 
 Time::Time(const Time& _o)
-    : tick(_o.tick), epsilon(_o.epsilon) {}
+    : timeStep_(_o.timeStep_) {}
 
 Time& Time::operator=(const Time& _o) {
-  tick = _o.tick;
-  epsilon = _o.epsilon;
+  timeStep_ = _o.timeStep_;
   return *this;
 }
 
+Time Time::create(TimeStep _timeStep) {
+  Time time;
+  time.timeStep_ = _timeStep;
+  return time;
+}
+
+Tick Time::tick() const {
+  return (timeStep_ & ~EPSILON_INV) >> EPSILON_BITS;
+}
+
+Epsilon Time::epsilon() const {
+  return timeStep_ & EPSILON_INV;
+}
+
+void Time::setTick(Tick _tick) {
+  assert(_tick <= TICK_INV);
+  timeStep_ = (_tick << EPSILON_BITS) | (timeStep_ & EPSILON_INV);
+}
+
+void Time::setEpsilon(Epsilon _epsilon) {
+  assert(_epsilon <= EPSILON_INV);
+  timeStep_ = _epsilon | (timeStep_ & ~EPSILON_INV);
+}
+
 bool Time::operator==(const Time& _o) const {
-  return tick == _o.tick && epsilon == _o.epsilon;
+  return timeStep_ == _o.timeStep_;
 }
 
 bool Time::operator!=(const Time& _o) const {
-  return tick != _o.tick || epsilon != _o.epsilon;
+  return timeStep_ != _o.timeStep_;
 }
 
 bool Time::operator<(const Time& _o) const {
-  return (tick < _o.tick) || (tick == _o.tick && epsilon < _o.epsilon);
+  return timeStep_ < _o.timeStep_;
 }
 
 bool Time::operator>(const Time& _o) const {
-  return (tick > _o.tick) || (tick == _o.tick && epsilon > _o.epsilon);
+  return timeStep_ > _o.timeStep_;
 }
 
 bool Time::operator<=(const Time& _o) const {
-  return (tick < _o.tick) || (tick == _o.tick && epsilon < _o.epsilon) ||
-      (tick == _o.tick && epsilon == _o.epsilon);
+  return timeStep_ <= _o.timeStep_;
 }
 
 bool Time::operator>=(const Time& _o) const {
-  return (tick > _o.tick) || (tick == _o.tick && epsilon > _o.epsilon) ||
-      (tick == _o.tick && epsilon == _o.epsilon);
+  return timeStep_ >= _o.timeStep_;
 }
 
 s32 Time::compare(const Time& _o) const {
-  if (tick == _o.tick) {
-    if (epsilon == _o.epsilon) {
-      return 0;
-    } else if (epsilon > _o.epsilon) {
-      return 1;
-    } else {
-      return -1;
-    }
-  } else if (tick > _o.tick) {
+  if (timeStep_ == _o.timeStep_) {
+    return 0;
+  } else if (timeStep_ > _o.timeStep_) {
     return 1;
   } else {
     return -1;
@@ -106,83 +125,81 @@ Time Time::max(const Time& _a, const Time& _b) {
   return (_a > _b) ? _a : _b;
 }
 
-Tick Time::operator+(const Time& _o) const {
-  Tick ntick = tick + _o.tick;
-  assert(ntick >= tick);  // detect overflow
-  return ntick;
+Time Time::operator+(const Time& _o) const {
+  Tick ntick = tick() + _o.tick();
+  assert(ntick >= tick());  // detect overflow
+  return create(ntick << EPSILON_BITS);
 }
 
-Tick Time::operator+(Tick _tick) const {
-  Tick ntick = tick + _tick;
-  assert(ntick >= tick);  // detect overflow
-  return ntick;
+Time Time::operator+(Tick _tick) const {
+  assert(_tick <= TICK_INV);
+  Tick ntick = tick() + _tick;
+  assert(ntick >= tick());  // detect overflow
+  return create(ntick << EPSILON_BITS);
 }
 
-Tick Time::operator-(const Time& _o) const {
-  Tick ntick = tick - _o.tick;
-  assert(ntick <= tick);  // detect underflow
-  return ntick;
+Time Time::operator-(const Time& _o) const {
+  Tick ntick = tick() - _o.tick();
+  assert(ntick <= tick());  // detect underflow
+  return create(ntick << EPSILON_BITS);
 }
 
-Tick Time::operator-(Tick _tick) const {
-  Tick ntick = tick - _tick;
-  assert(ntick <= tick);  // detect underflow
-  return ntick;
+Time Time::operator-(Tick _tick) const {
+  Tick ntick = tick() - _tick;
+  assert(ntick <= tick());  // detect underflow
+  return create(ntick << EPSILON_BITS);
 }
 
 Time& Time::operator+=(const Time& _o) {
-  if (_o.tick > 0) {
-    Tick ntick = tick + _o.tick;
-    assert(ntick >= tick);  // detect overflow
-    tick = ntick;
-    epsilon = 0;
-  }
+  Tick ntick = tick() + _o.tick();
+  assert(ntick >= tick());  // detect overflow
+  timeStep_ = ntick << EPSILON_BITS;
   return *this;
 }
 
 Time& Time::operator+=(Tick _tick) {
-  if (_tick > 0) {
-    Tick ntick = tick + _tick;
-    assert(ntick >= tick);  // detect overflow
-    tick = ntick;
-    epsilon = 0;
-  }
+  Tick ntick = tick() + _tick;
+  assert(ntick >= tick());  // detect overflow
+  timeStep_ = ntick << EPSILON_BITS;
   return *this;
 }
 
 Time& Time::operator-=(const Time& _o) {
-  if (_o.tick > 0) {
-    Tick ntick = tick - _o.tick;
-    assert(ntick <= tick);  // detect underflow
-    tick = ntick;
-    epsilon = 0;
-  }
+  Tick ntick = tick() - _o.tick();
+  assert(ntick <= tick());  // detect underflow
+  timeStep_ = ntick << EPSILON_BITS;
   return *this;
 }
 
 Time& Time::operator-=(Tick _tick) {
-  if (_tick > 0) {
-    Tick ntick = tick - _tick;
-    assert(ntick <= tick);  // detect underflow
-    tick = ntick;
-    epsilon = 0;
-  }
+  Tick ntick = tick() - _tick;
+  assert(ntick <= tick());  // detect underflow
+  timeStep_ = ntick << EPSILON_BITS;
   return *this;
 }
 
-Time Time::plusEps() const {
-  assert(epsilon < EPSILON_INV);
-  return Time(tick, epsilon + 1);
+Time Time::nextEpsilon() const {
+  assert(epsilon() < EPSILON_INV);
+  return create(timeStep_ + 1);
+}
+
+void Time::incrEpsilon() {
+  assert(epsilon() < EPSILON_INV);
+  timeStep_ += 1;
 }
 
 std::string Time::toString() const {
   std::stringstream ss;
-  ss << static_cast<u64>(tick) << ':' << static_cast<u64>(epsilon);
+  ss << static_cast<u64>(tick()) << ':' << static_cast<u64>(epsilon());
   return ss.str();
 }
 
 bool Time::valid() const {
-  return tick != TICK_INV && epsilon != EPSILON_INV;
+  return tick() != TICK_INV && epsilon() != EPSILON_INV;
+}
+
+TimeStep Time::raw() const {
+  return timeStep_;
 }
 
 }  // namespace des

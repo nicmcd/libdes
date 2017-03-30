@@ -42,6 +42,7 @@ namespace des {
 class SpinLock {
  public:
   SpinLock();
+  SpinLock(const SpinLock& _o);  // constructs to unlocked
   ~SpinLock();
   void lock();
   bool tryLock();

@@ -54,7 +54,7 @@ class NullModel : public des::Model {
   }
 
   void nextEvent() {
-    event_.time.tick += 1 + (prng_() % 100);
+    event_.time += 1 + (prng_() % 100);
     simulator->addEvent(&event_);
   }
 

@@ -65,7 +65,7 @@ TEST(Event, constructor2) {
 TEST(Event, constructor3) {
   des::Simulator sim;
   MyModel model(&sim);
-  des::Time etime(123456789, 23);
+  des::Time etime(123456789, 9);
   des::Event evt(&model,
                  static_cast<des::EventHandler>(&MyModel::ignoreEvent),
                  etime);
@@ -79,10 +79,10 @@ TEST(Event, constructor3b) {
   MyModel model(&sim);
   des::Event evt(&model,
                  static_cast<des::EventHandler>(&MyModel::ignoreEvent),
-                 des::Time(123456789, 23));
+                 des::Time(123456789, 9));
   ASSERT_EQ(evt.model, &model);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
-  ASSERT_TRUE(evt.time == des::Time(123456789, 23));
+  ASSERT_TRUE(evt.time == des::Time(123456789, 9));
 }
 
 TEST(Event, eventCompare) {
@@ -117,9 +117,9 @@ TEST(Event, item) {
   MyModel model(&sim);
   des::ItemEvent<u32> evt(
       &model, static_cast<des::EventHandler>(&MyModel::ignoreEvent),
-      des::Time(123456789, 23), 0xDEAFBEEF);
+      des::Time(123456789, 9), 0xDEAFBEEF);
   ASSERT_EQ(evt.model, &model);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
-  ASSERT_TRUE(evt.time == des::Time(123456789, 23));
+  ASSERT_TRUE(evt.time == des::Time(123456789, 9));
   ASSERT_EQ(evt.item, 0xDEAFBEEF);
 }

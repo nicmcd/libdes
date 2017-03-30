@@ -99,7 +99,7 @@ TEST(ClockedModel, futureCycle) {
   ASSERT_EQ(c.cyclePhase(), 500u);
 
   for (u64 cnt = 0; cnt < SIMS; cnt++) {
-    des::Tick now = sim.time().tick;
+    des::Tick now = sim.time().tick();
     for (u64 cyc = 1; cyc < 5; cyc++) {
       for (u64 idx = 0; idx < m.size(); idx++) {
         des::ClockedModel* cm = m.at(idx);
@@ -110,7 +110,7 @@ TEST(ClockedModel, futureCycle) {
         ASSERT_EQ(cmfc, sfc);
       }
     }
-    t.setEvent(des::Time(now + 1, 21));
+    t.setEvent(des::Time(now + 1, 12));
     sim.simulate(false);
   }
 }
