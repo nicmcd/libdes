@@ -28,28 +28,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef DES_MPSCQUEUE_H_
+#define DES_MPSCQUEUE_H_
+
+#include <atomic>
+
+#include "des/cacheline_util.h"
 #include "des/Event.h"
-
-#include <prim/prim.h>
-
-#include "des/Model.h"
-#include "des/Time.h"
 
 namespace des {
 
-Event::Event()
-    : model(nullptr), handler(nullptr), time(), next(nullptr) {}
+// this is a multi-producer single-consumer event queue
+class MpScQueue {
+ public:
+  MpScQueue();
+  ~MpScQueue();
 
-Event::Event(Model* _model, EventHandler _handler)
-    : model(_model), handler(_handler), time(), next(nullptr) {}
+  // multiple threads can safely call this
+  //  this pushes the event to the back of the queue
+  void push(Event* _event);
 
-Event::Event(Model* _model, EventHandler _handler, Time _time)
-    : model(_model), handler(_handler), time(_time), next(nullptr) {}
+  // only a single thread can safely call this
+  //  this pops and returns the Event at the front of the queue
+  //  (or nullptr if the queue is empty)
+  Event* pop();
 
-Event::~Event() {}
+ private:
+  // this points to the current tail
+  //  this is cacheline aligned and padded
+  alignas(CACHELINE_SIZE) std::atomic<Event*> tail_;
+  char padding1_[CLPAD(sizeof(tail_))];
 
-bool EventComparator::operator()(const Event* _lhs, const Event* _rhs) const {
-  return _lhs->time > _rhs->time;
-}
+  // misc state variables
+  Event dummies_[2];
+  bool epoch_;  // indicates which dummy is in use
+  Event* nextPop_;
+};
 
 }  // namespace des
+
+#endif  // DES_MPSCQUEUE_H_

@@ -31,6 +31,8 @@
 #ifndef DES_EVENT_H_
 #define DES_EVENT_H_
 
+#include <atomic>
+
 #include "des/Time.h"
 
 namespace des {
@@ -52,6 +54,9 @@ class Event {
   Model* model;
   EventHandler handler;
   Time time;
+
+  // DO NOT USE. This is only used by the simulation core
+  std::atomic<Event*> next;
 };
 
 // This defines a comparator object for comparing events.

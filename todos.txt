@@ -1,5 +1,0 @@
-Executer spinlocks:
-Currently, there are two lock ops to get the next event. This can be reduced to one.
-Try using only one op and see if performance gets better. The critical section will
-be larger, but there will only be one. You will need a real work load before you can
-legitimately test this.

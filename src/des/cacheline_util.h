@@ -33,6 +33,8 @@
 
 #include <prim/prim.h>
 
+namespace des {
+
 const u64 CACHELINE_SIZE = 64;  // todo(nic): is there a portable way?
 
 // compute cache line padding size
@@ -41,5 +43,27 @@ constexpr u64 CLPAD(u64 _objSize) {
       (((_objSize % CACHELINE_SIZE) > 0) * CACHELINE_SIZE) -
       _objSize;
 }
+
+// this creates cache line aligned and padded variables
+template <typename T, bool = false>
+struct AlignedAndPaddedStruct {
+  using type = struct {
+    alignas(CACHELINE_SIZE) T item;
+    char padding[CLPAD(sizeof(T))];
+  };
+};
+
+template <typename T>
+struct AlignedAndPaddedStruct<T, true> {
+  using type = struct {
+    alignas(CACHELINE_SIZE) T item;
+  };
+};
+
+template <typename T>
+using AlignedAndPadded = typename AlignedAndPaddedStruct
+    <T, (sizeof(T) % CACHELINE_SIZE == 0)>::type;
+
+}  // namespace des
 
 #endif  // DES_CACHELINE_UTIL_H_

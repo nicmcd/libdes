@@ -82,8 +82,8 @@ Simulator::Simulator(u32 _numThreads)
   }
   numThreads_ = _numThreads;
 
-  // create the event queues and spinlocks
-  queueAndLocks_.resize(numThreads_);
+  // create the event queues
+  queueSets_ = new QueueSet[numThreads_ + 1];  // +1 for tail padding
 
   // initialize the simState
   simState_.running.store(false, std::memory_order_release);
@@ -111,14 +111,17 @@ void Simulator::addEvent(Event* _event) {
   TimeStep timeStep = simState_.timeStep;
   assert(eventTimeStep > timeStep);
 
-  // get pointers to the event queue and queue lock
+  // push the event into the queue
   u32 id = _event->model->executer;
-  EventQueueAndLock& queueAndLock = queueAndLocks_.at(id);
-
-  // add event the queue
-  queueAndLock.lock.lock();
-  queueAndLock.queue.push(_event);
-  queueAndLock.lock.unlock();
+  if (id != exeState.id) {
+    // this event is crossing threads, put it into the oqueue
+    MpScQueue& oqueue = queueSets_[id].oqueue;
+    oqueue.push(_event);
+  } else {
+    // this event is NOT crossing threads, put it directly into the pqueue
+    EventQueue& pqueue = queueSets_[id].pqueue;
+    pqueue.push(_event);
+  }
 
   // minimum time step comparison
   exeState.minTimeStep = std::min(exeState.minTimeStep, eventTimeStep);
@@ -137,9 +140,20 @@ void Simulator::simulate(bool _logSummary) {
   // find the first time to simulate
   TimeStep firstTimeStep = TIMESTEP_INV;
   for (u32 id = 0; id < numThreads_; id++) {
-    EventQueueAndLock& queueAndLock = queueAndLocks_.at(id);
-    if (!queueAndLock.queue.empty()) {
-      TimeStep queueMinTimeStep = queueAndLock.queue.top()->time.raw();
+    MpScQueue& oqueue = queueSets_[id].oqueue;
+    EventQueue& pqueue = queueSets_[id].pqueue;
+
+    // transfer from oqueue to pqueue
+    {
+      Event* tmpEvt;
+      while ((tmpEvt = oqueue.pop())) {
+        pqueue.push(tmpEvt);
+      }
+    }
+
+    // check time
+    if (!pqueue.empty()) {
+      TimeStep queueMinTimeStep = pqueue.top()->time.raw();
       firstTimeStep = std::min(firstTimeStep, queueMinTimeStep);
     }
   }
@@ -431,8 +445,9 @@ void Simulator::executer(u32 _id) {
   // set up the thread local executer id
   exeState.id = _id;
 
-  // get pointers to the event queue and queue lock
-  EventQueueAndLock& queueAndLock = queueAndLocks_.at(_id);
+  // get a reference to the event queues
+  MpScQueue& oqueue = queueSets_[_id].oqueue;
+  EventQueue& pqueue = queueSets_[_id].pqueue;
 
   // this is the current epoch
   bool cEpoch = simState_.epoch.load(std::memory_order_acquire);
@@ -452,15 +467,22 @@ void Simulator::executer(u32 _id) {
       bool done = false;
       Event* event;
 
+      // transfer events from oqueue to pqueue
+      {
+        Event* tmpEvt;
+        while ((tmpEvt = oqueue.pop())) {
+          pqueue.push(tmpEvt);
+        }
+      }
+
       // determine if this time step is complete
       //  if not, get the next event
-      queueAndLock.lock.lock();
-      if (!queueAndLock.queue.empty()) {
-        event = queueAndLock.queue.top();
+      if (!pqueue.empty()) {
+        event = pqueue.top();
         queueMinTimeStep = event->time.raw();
         if (queueMinTimeStep == cTimeStep) {
           // the queue is not empty and the top event can be executed, continue
-          queueAndLock.queue.pop();
+          pqueue.pop();
         } else {
           // the queue is not empty but the event is not for now, done
           done = true;
@@ -470,7 +492,6 @@ void Simulator::executer(u32 _id) {
         queueMinTimeStep = TIMESTEP_INV;
         done = true;
       }
-      queueAndLock.lock.unlock();
       if (done) {
         break;
       }

@@ -44,7 +44,7 @@
 
 #include "des/cacheline_util.h"
 #include "des/Event.h"
-#include "des/SpinLock.h"
+#include "des/MpScQueue.h"
 #include "des/Time.h"
 
 namespace des {
@@ -55,6 +55,10 @@ class Logger;
 // these variables are read/write shared variables for the executers
 //  these are cache line aligned and padded individually
 struct alignas(CACHELINE_SIZE) SimState {
+  // this is an initial padding incase the object is dynamically allocated,
+  //  which does not adhere to the alignas specifier
+  char padding0[CACHELINE_SIZE];
+
   // this variable tells the executers to continue
   std::atomic<bool> running;
   char padding1[CLPAD(sizeof(running))];
@@ -63,12 +67,12 @@ struct alignas(CACHELINE_SIZE) SimState {
   TimeStep timeStep;
   char padding2[CLPAD(sizeof(timeStep))];
 
-  // this variable is used by the executors to determine which epoch they are
+  // this variable is used by the executers to determine which epoch they are
   //  currently working in
   std::atomic<bool> epoch;
   char padding3[CLPAD(sizeof(epoch))];
 
-  // this variable tracks how many executors have not yet hit the timestep
+  // this variable tracks how many executers have not yet hit the timestep
   //  barrier in the current epoch
   std::atomic<u32> yetToArrive;
   char padding4[CLPAD(sizeof(yetToArrive))];
@@ -94,21 +98,7 @@ struct alignas(CACHELINE_SIZE) SimState {
   char padding9[CLPAD(sizeof(tickCount))];
 };
 
-// this defines the type of queue used for events
-typedef std::priority_queue<Event*, std::vector<Event*>,
-                            EventComparator> EventQueue;
 
-// these variables are for accessing the event queues safely
-//  these are cache line aligned and padded individually
-struct alignas(CACHELINE_SIZE) EventQueueAndLock {
-  // this variable is an EventQueue
-  EventQueue queue;
-  char padding1[CLPAD(sizeof(queue))];
-
-  // this variable is the lock associated with the queue
-  SpinLock lock;
-  char padding2[CLPAD(sizeof(lock))];
-};
 
 // this structure contains variables that track performance statistics
 /*
@@ -155,6 +145,25 @@ class Simulator {
   u32 threadId() const;
 
  private:
+  // this defines the type of queue used for events
+  typedef std::priority_queue<Event*, std::vector<Event*>,
+                              EventComparator> EventQueue;
+
+  // this defines a set of event queues for each executer thread
+  struct alignas(CACHELINE_SIZE) QueueSet {
+    // this is an initial padding incase the object is dynamically allocated,
+    //  which does not adhere to the alignas specifier
+    char padding0[CACHELINE_SIZE];
+
+    // a multi-producer single-consumer event queue for lockfree staging
+    MpScQueue oqueue;
+    char padding1[CACHELINE_SIZE];
+
+    // a time ordered event queue
+    EventQueue pqueue;
+    char padding2[CACHELINE_SIZE];
+  };
+
   // this is the function that gets called per executer thread
   void executer(u32 _id);
 
@@ -162,8 +171,8 @@ class Simulator {
   u32 numThreads_;
   SimState simState_;
 
-  // per-thread variables
-  std::vector<EventQueueAndLock> queueAndLocks_;
+  // per-thread queue sets
+  QueueSet* queueSets_;
 
   // this is a logger for the entire simulation framework
   Logger* logger_;

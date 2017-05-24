@@ -34,16 +34,16 @@
 #include <prim/prim.h>
 
 TEST(cacheline_util, CLPAD_Logic) {
-  ASSERT_EQ(CLPAD(1), CACHELINE_SIZE - 1);
-  ASSERT_EQ(CLPAD(2 * CACHELINE_SIZE), 0u);
-  ASSERT_EQ(CLPAD(2 * CACHELINE_SIZE + 1), CACHELINE_SIZE - 1);
-  ASSERT_EQ(CLPAD(3 * CACHELINE_SIZE - 1), 1u);
+  ASSERT_EQ(des::CLPAD(1), des::CACHELINE_SIZE - 1);
+  ASSERT_EQ(des::CLPAD(2 * des::CACHELINE_SIZE), 0u);
+  ASSERT_EQ(des::CLPAD(2 * des::CACHELINE_SIZE + 1), des::CACHELINE_SIZE - 1);
+  ASSERT_EQ(des::CLPAD(3 * des::CACHELINE_SIZE - 1), 1u);
 }
 
 TEST(cacheline_util, CLPAD_Use) {
   struct alignas(64) AlignedAndPaddedU64 {
     u64 num;
-    char pad[CLPAD(sizeof(num))];
+    char pad[des::CLPAD(sizeof(num))];
   };
   AlignedAndPaddedU64 aapu64;
   u64 u;
@@ -63,8 +63,8 @@ TEST(cacheline_util, CLPAD_Use) {
   ASSERT_EQ(u, 0xCDABCDABCDABCDABllu);
 
   // size and address
-  ASSERT_EQ(sizeof(aapu64), CACHELINE_SIZE);
+  ASSERT_EQ(sizeof(aapu64), des::CACHELINE_SIZE);
   auto* ptr = &aapu64;
-  u64 mod = reinterpret_cast<u64>(ptr) % CACHELINE_SIZE;
+  u64 mod = reinterpret_cast<u64>(ptr) % des::CACHELINE_SIZE;
   ASSERT_EQ(mod, 0u);
 }
