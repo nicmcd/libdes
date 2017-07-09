@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2012-2016, Nic McDonald
- * All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -15,6 +12,9 @@
  * - Neither the name of prim nor the names of its contributors may be used to
  * endorse or promote products derived from this software without specific prior
  * written permission.
+ *
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -49,85 +49,28 @@
 
 namespace des {
 
-class Model;
 class Logger;
-
-// these variables are read/write shared variables for the executers
-//  these are cache line aligned and padded individually
-struct alignas(CACHELINE_SIZE) SimState {
-  // this is an initial padding incase the object is dynamically allocated,
-  //  which does not adhere to the alignas specifier
-  char padding0[CACHELINE_SIZE];
-
-  // this variable tells the executers to continue
-  std::atomic<bool> running;
-  char padding1[CLPAD(sizeof(running))];
-
-  // this variable is the current time of execution
-  TimeStep timeStep;
-  char padding2[CLPAD(sizeof(timeStep))];
-
-  // this variable is used by the executers to determine which epoch they are
-  //  currently working in
-  std::atomic<bool> epoch;
-  char padding3[CLPAD(sizeof(epoch))];
-
-  // this variable tracks how many executers have not yet hit the timestep
-  //  barrier in the current epoch
-  std::atomic<u32> yetToArrive;
-  char padding4[CLPAD(sizeof(yetToArrive))];
-
-  // this variable tracks the next time step to be used by epoch
-  std::atomic<TimeStep> nextTimeStep[2];
-  char padding5[CLPAD(sizeof(nextTimeStep))];
-
-  // this variable is a flag to show statistics
-  std::atomic<bool> showStats;
-  char padding6[CLPAD(sizeof(showStats))];
-
-  // this variable counts total number of executed events
-  std::atomic<u64> eventCount;
-  char padding7[CLPAD(sizeof(eventCount))];
-
-  // this variable counts total number of executed time steps
-  u64 timeStepCount;
-  char padding8[CLPAD(sizeof(timeStepCount))];
-
-  // this variable counts total number of executed ticks
-  u64 tickCount;
-  char padding9[CLPAD(sizeof(tickCount))];
-};
-
-
-
-// this structure contains variables that track performance statistics
-/*
-struct SimStats {
-  u64 uniqueTimeSteps;
-  u64 eventCount;
-  u64 intervalEvents;
-  Tick lastReportedTick;
-  std::chrono::steady_clock::time_point startTime;
-  std::chrono::steady_clock::time_point lastRealTime;
-  };*/
+class Model;
+class Observer;
 
 class Simulator {
  public:
   Simulator();
   explicit Simulator(u32 _numThreads);
-  virtual ~Simulator();
+  ~Simulator();
 
   // general info
   u32 threads() const;
   Time time() const;
 
-  // events and event handling
-  void addEvent(Event* _event);
-  void simulate(bool _logSummary);
-
-  // logging
-  Logger* getLogger() const;
+  // logger for global access
   void setLogger(Logger* _logger);
+  Logger* getLogger() const;
+
+  // observing
+  void addObserver(Observer* _observer);
+  void setObservingIntervel(f64 _interval);
+  void setObservingPower(u64 _expPow2Events);
 
   // models and debugging
   void addModel(Model* _model);
@@ -137,8 +80,9 @@ class Simulator {
   void addDebugName(const std::string& _fullName);
   void debugCheck();
 
-  // this triggers one statistics output in the logger
-  void showStats();
+  // events and event handling
+  void addEvent(Event* _event);
+  void simulate();
 
  protected:
   // this is used for subclasses to generate thread specific data structures
@@ -150,6 +94,7 @@ class Simulator {
                               EventComparator> EventQueue;
 
   // this defines a set of event queues for each executer thread
+  //  these are cache line aligned and padded individually
   struct alignas(CACHELINE_SIZE) QueueSet {
     // this is an initial padding incase the object is dynamically allocated,
     //  which does not adhere to the alignas specifier
@@ -164,18 +109,82 @@ class Simulator {
     char padding2[CACHELINE_SIZE];
   };
 
+  // these variables are read/write shared variables for the executers
+  //  these are cache line aligned and padded individually
+  struct alignas(CACHELINE_SIZE) State {
+    // this is an initial padding incase the object is dynamically allocated,
+    //  which does not adhere to the alignas specifier
+    char padding0[CACHELINE_SIZE];
+
+    // this variable tells the executers to continue
+    std::atomic<bool> running;
+    char padding1[CLPAD(sizeof(running))];
+
+    // this variable is the current time of execution
+    TimeStep timeStep;
+    char padding2[CLPAD(sizeof(timeStep))];
+
+    // this variable is used by the executers to determine which epoch they are
+    //  currently working in
+    std::atomic<bool> epoch;
+    char padding3[CLPAD(sizeof(epoch))];
+
+    // this variable tracks how many executers have not yet hit the timestep
+    //  barrier in the current epoch
+    std::atomic<u32> yetToArrive;
+    char padding4[CLPAD(sizeof(yetToArrive))];
+
+    // this variable tracks the next time step to be used by epoch
+    std::atomic<TimeStep> nextTimeStep[2];
+    char padding5[CLPAD(sizeof(nextTimeStep))];
+  };
+
+  // these variables are read/write shared variables for the purpose of stats
+  //  these are partially cache line aligned and padded individually
+  struct alignas(CACHELINE_SIZE) Stats {
+    // this is an initial padding incase the object is dynamically allocated,
+    //  which does not adhere to the alignas specifier
+    char padding0[CACHELINE_SIZE];
+
+    // this variable counts total number of executed events
+    std::atomic<u64> eventCount;
+    char padding2[CLPAD(sizeof(eventCount))];
+
+    // this variable counts total number of executed time steps
+    u64 timeStepCount;
+    char padding3[CLPAD(sizeof(timeStepCount))];
+
+    // this variable tracks the start time of simulation
+    std::chrono::steady_clock::time_point startRealTime;
+
+    // this variable tracks the last time stats were printed
+    std::chrono::steady_clock::time_point lastRealTime;
+
+    // this variable tracks the last amount of events reported
+    u64 lastEventCount;
+
+    // this variable tracks the last tick reported
+    u64 lastTick;
+  };
+
   // this is the function that gets called per executer thread
   void executer(u32 _id);
 
   // info
-  u32 numThreads_;
-  SimState simState_;
+  const u32 numThreads_;
+  State state_;
+  Stats stats_;
 
   // per-thread queue sets
   QueueSet* queueSets_;
 
-  // this is a logger for the entire simulation framework
+  // logger
   Logger* logger_;
+
+  // these are for observing simulator performance
+  std::vector<Observer*> observers_;
+  f64 observingInterval_;
+  u64 observingMask_;
 
   // models and debugging names
   std::unordered_map<std::string, Model*> models_;

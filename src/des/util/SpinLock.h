@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2012-2016, Nic McDonald
- * All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -16,6 +13,9 @@
  * endorse or promote products derived from this software without specific prior
  * written permission.
  *
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,36 +28,30 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/SpinLock.h"
+#ifndef DES_UTIL_SPINLOCK_H_
+#define DES_UTIL_SPINLOCK_H_
+
+#include <atomic>
+
+#if ATOMIC_BOOL_LOCK_FREE != 2
+#error "std::atomic<bool> is not lock-free in this implementation"
+#endif
 
 namespace des {
 
-SpinLock::SpinLock()
-    : lock_(false) {}
+class SpinLock {
+ public:
+  SpinLock();
+  SpinLock(const SpinLock& _o);  // constructs to unlocked
+  ~SpinLock();
+  void lock();
+  bool tryLock();
+  void unlock();
 
-SpinLock::SpinLock(const SpinLock& _o)
-    : lock_(false) {
-  (void)_o;  // unused
-}
-
-SpinLock::~SpinLock() {}
-
-void SpinLock::lock() {
-  do {
-    // speculative status
-    while (lock_.load()) {
-      // make this spin-wait more efficient
-      asm volatile("pause\n": : :"memory");
-    }
-  } while (lock_.exchange(true, std::memory_order_acquire));
-}
-
-bool SpinLock::tryLock() {
-  return !lock_.exchange(true, std::memory_order_acquire);
-}
-
-void SpinLock::unlock() {
-  lock_.store(false, std::memory_order_release);
-}
+ private:
+  std::atomic<bool> lock_;
+};
 
 }  // namespace des
+
+#endif  // DES_UTIL_SPINLOCK_H_

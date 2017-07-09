@@ -28,55 +28,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ClockedModel.h"
-
-#include <cassert>
-
-#include "des/Simulator.h"
+#include "des/util/SpinLock.h"
 
 namespace des {
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent)
-    : ClockedModel(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
-                   _parent->cyclePhase_) {}
+SpinLock::SpinLock()
+    : lock_(false) {}
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
-                   _cyclePhase) {}
-
-ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : Model(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
+SpinLock::SpinLock(const SpinLock& _o)
+    : lock_(false) {
+  (void)_o;  // unused
 }
 
-ClockedModel::~ClockedModel() {}
+SpinLock::~SpinLock() {}
 
-Tick ClockedModel::cyclePeriod() const {
-  return cyclePeriod_;
-}
-
-Tick ClockedModel::cyclePhase() const {
-  return cyclePhase_;
-}
-
-Tick ClockedModel::futureCycle(u32 _cycles) const {
-  assert(_cycles > 0);
-  Tick tick = simulator->time().tick();
-  Tick rem = tick % cyclePeriod_;
-  if (rem != cyclePhase_) {
-    tick += (cyclePhase_ - rem);
-    if (rem > cyclePhase_) {
-      tick += cyclePeriod_;
+void SpinLock::lock() {
+  do {
+    // speculative status
+    while (lock_.load()) {
+      // make this spin-wait more efficient
+      asm volatile("pause\n": : :"memory");
     }
-    _cycles--;
-  }
-  return tick + (cyclePeriod_ * _cycles);
+  } while (lock_.exchange(true, std::memory_order_acquire));
+}
+
+bool SpinLock::tryLock() {
+  return !lock_.exchange(true, std::memory_order_acquire);
+}
+
+void SpinLock::unlock() {
+  lock_.store(false, std::memory_order_release);
 }
 
 }  // namespace des

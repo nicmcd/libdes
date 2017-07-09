@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2012-2016, Nic McDonald
- * All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -16,6 +13,9 @@
  * endorse or promote products derived from this software without specific prior
  * written permission.
  *
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -28,30 +28,31 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_SPINLOCK_H_
-#define DES_SPINLOCK_H_
+#ifndef DES_UTIL_BASICOBSERVER_H_
+#define DES_UTIL_BASICOBSERVER_H_
 
-#include <atomic>
-
-#if ATOMIC_BOOL_LOCK_FREE != 2
-#error "std::atomic<bool> is not lock-free in this implementation"
-#endif
+#include "des/Observer.h"
+#include "des/Logger.h"
 
 namespace des {
 
-class SpinLock {
+class BasicObserver : public Observer {
  public:
-  SpinLock();
-  SpinLock(const SpinLock& _o);  // constructs to unlocked
-  ~SpinLock();
-  void lock();
-  bool tryLock();
-  void unlock();
+  BasicObserver(Logger* _logger, bool _logProgress, bool _logSummary);
+  ~BasicObserver();
+
+  void progressStatistics(
+      const Observer::ProgressStatistics& _progressStats) override;
+  void summaryStatistics(
+      const Observer::SummaryStatistics& _summaryStats) override;
 
  private:
-  std::atomic<bool> lock_;
+  Logger* logger_;
+  bool logProgress_;
+  bool logSummary_;
+  char* statsString_;
 };
 
 }  // namespace des
 
-#endif  // DES_SPINLOCK_H_
+#endif  // DES_UTIL_BASICOBSERVER_H_

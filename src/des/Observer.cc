@@ -28,55 +28,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ClockedModel.h"
-
-#include <cassert>
-
-#include "des/Simulator.h"
+#include "des/Observer.h"
 
 namespace des {
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent)
-    : ClockedModel(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
-                   _parent->cyclePhase_) {}
+Observer::Observer() {}
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
-                   _cyclePhase) {}
+Observer::~Observer() {}
 
-ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : Model(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
+void Observer::progressStatistics(const ProgressStatistics& _progressStats) {
+  (void)_progressStats;  // unused
 }
 
-ClockedModel::~ClockedModel() {}
-
-Tick ClockedModel::cyclePeriod() const {
-  return cyclePeriod_;
-}
-
-Tick ClockedModel::cyclePhase() const {
-  return cyclePhase_;
-}
-
-Tick ClockedModel::futureCycle(u32 _cycles) const {
-  assert(_cycles > 0);
-  Tick tick = simulator->time().tick();
-  Tick rem = tick % cyclePeriod_;
-  if (rem != cyclePhase_) {
-    tick += (cyclePhase_ - rem);
-    if (rem > cyclePhase_) {
-      tick += cyclePeriod_;
-    }
-    _cycles--;
-  }
-  return tick + (cyclePeriod_ * _cycles);
+void Observer::summaryStatistics(const SummaryStatistics& _summaryStats) {
+  (void)_summaryStats;  // unused
 }
 
 }  // namespace des

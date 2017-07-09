@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2012-2016, Nic McDonald
- * All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
  *
@@ -15,6 +12,9 @@
  * - Neither the name of prim nor the names of its contributors may be used to
  * endorse or promote products derived from this software without specific prior
  * written permission.
+ *
+ * See the NOTICE file distributed with this work for additional information
+ * regarding copyright ownership.
  *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
@@ -45,7 +45,7 @@ class Logger {
   Logger();
   // "-" to stdout, "+" to stderr, "*.gz" to gzip file, regular file otherwise
   explicit Logger(const std::string& _filename);
-  ~Logger();
+  virtual ~Logger();
   void log(const char* _message, u64 _len);
 
  private:
