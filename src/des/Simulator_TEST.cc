@@ -37,15 +37,15 @@
 #include <vector>
 
 #include "des/Event.h"
-#include "des/Model.h"
+#include "des/Component.h"
 #include "des/Time.h"
 
-class NullModel : public des::Model {
+class NullComponent : public des::Component {
  public:
-  NullModel(des::Simulator* _simulator, u64 _id)
-      : des::Model(_simulator, std::to_string(_id), nullptr), id_(_id),
+  NullComponent(des::Simulator* _simulator, u64 _id)
+      : des::Component(_simulator, std::to_string(_id), nullptr), id_(_id),
         event_(this, static_cast<des::EventHandler>(
-            &NullModel::ignoreEvent), des::Time()) {
+            &NullComponent::ignoreEvent), des::Time()) {
     debug = true;
   }
 
@@ -65,24 +65,24 @@ class NullModel : public des::Model {
 };
 
 TEST(Simulator, multisim) {
-  const u64 MODELS = 3;
+  const u64 COMPONENTS = 3;
   const u64 SIMS = 100;
 
   des::Simulator* sim = new des::Simulator();
-  std::vector<NullModel*> models;
-  for (u64 id = 0; id < MODELS; id++) {
-    models.push_back(new NullModel(sim, id));
+  std::vector<NullComponent*> components;
+  for (u64 id = 0; id < COMPONENTS; id++) {
+    components.push_back(new NullComponent(sim, id));
   }
 
   for (u64 s = 0; s < SIMS; s++) {
-    for (u64 id = 0; id < MODELS; id++) {
-      models.at(id)->nextEvent();
+    for (u64 id = 0; id < COMPONENTS; id++) {
+      components.at(id)->nextEvent();
     }
     sim->simulate();
   }
 
-  for (u64 id = 0; id < MODELS; id++) {
-    delete models.at(id);
+  for (u64 id = 0; id < COMPONENTS; id++) {
+    delete components.at(id);
   }
   delete sim;
 }

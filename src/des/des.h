@@ -31,10 +31,10 @@
 #ifndef DES_DES_H_
 #define DES_DES_H_
 
-#include "des/ClockedModel.h"
+#include "des/Clocked.h"
+#include "des/Component.h"
 #include "des/Event.h"
 #include "des/Logger.h"
-#include "des/Model.h"
 #include "des/Observer.h"
 #include "des/Simulator.h"
 #include "des/Time.h"

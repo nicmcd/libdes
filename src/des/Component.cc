@@ -28,58 +28,83 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_MODEL_H_
-#define DES_MODEL_H_
+#include "des/Component.h"
 
-#include <prim/prim.h>
+#include <cassert>
+#include <cstdarg>
 
-#include <string>
-
-#include "des/Time.h"
+#include "des/Logger.h"
+#include "des/Simulator.h"
 
 namespace des {
 
-class Logger;
-class Simulator;
+Component::Component(const std::string& _name, const Component* _parent)
+    : Component(_parent->simulator, _name, _parent) {}
 
-class Model {
- public:
-  // this constructor inherits the Simulator from the parent
-  Model(const std::string& _name, const Model* _parent);
-  // this is the full constructor
-  Model(Simulator* _simulator, const std::string& _name,
-        const Model* _parent);
-  virtual ~Model();
-  const std::string& baseName() const;
-  std::string fullName() const;
+Component::Component(Simulator* _simulator, const std::string& _name,
+                     const Component* _parent)
+    : simulator(_simulator), debug(false), executer(U32_MAX),
+      name_(_name), parent_(_parent) {
+  simulator->addComponent(this);
+}
 
-  Simulator* simulator;
-  bool debug;
-  u32 executer;
+Component::~Component() {
+  simulator->removeComponent(fullName());
+}
 
- private:
-  std::string name_;
-  const Model* parent_;
-};
+const std::string& Component::baseName() const {
+  return name_;
+}
+
+std::string Component::fullName() const {
+  if (parent_) {
+    std::string name(parent_->fullName());
+    name += '.';
+    name += name_;
+    return name;
+  } else {
+    return name_;
+  }
+}
 
 #ifndef NDEBUGLOG
 s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
-              const Time& _time, const char* _format, ...);
+              const Time& _time, const char* _format, ...) {
+  // create a buffer to create the string in
+  s32 budget = 2000;
+  char* buf = new char[budget];
+  char* ptr = buf;
+  s32 res;
 
-#define dlogf(...) (                                                    \
-    ((debug) && (simulator->getLogger())) ?                             \
-    (des::debuglogf(simulator->getLogger(),                             \
-                    __func__,                                           \
-                    __LINE__,                                           \
-                    fullName().c_str(),                                 \
-                    simulator->time(),                                  \
-                    __VA_ARGS__)) : (0))
-#else  // NDEBUGLOG
+  // format the line header
+  res = snprintf(ptr, budget, "[%s] %s:%s:%i | ", _time.toString().c_str(),
+                 _name, _func, _line);
+  assert((res >= 0) && (res < budget));
+  ptr += res;
+  budget -= res;
 
-#define dlogf(...)
+  // add the rest of the contents
+  va_list args;
+  va_start(args, _format);
+  res = vsnprintf(ptr, budget, _format, args);
+  va_end(args);
+  assert((res >= 0) && (res < budget));
+  ptr += res;
+  budget -= res;
 
+  // add the line ending
+  assert(budget >= 2);
+  ptr[0] = '\n';
+  ptr[1] = '\0';
+  ptr += 2;
+
+  // give string to logger to print
+  _logger->log(buf, ptr - buf - 1);
+
+  // delete the buffer and return succesfully
+  delete[] buf;
+  return 0;
+}
 #endif  // NDEBUGLOG
 
 }  // namespace des
-
-#endif  // DES_MODEL_H_

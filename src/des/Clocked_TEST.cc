@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ClockedModel.h"
+#include "des/Clocked.h"
 
 #include <gtest/gtest.h>
 #include <prim/prim.h>
@@ -37,16 +37,16 @@
 #include <thread>
 
 #include "des/Event.h"
-#include "des/Model.h"
+#include "des/Component.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
 
-class SetTimeModel : public des::Model {
+class SetTimeComponent : public des::Component {
  public:
-  explicit SetTimeModel(des::Simulator* _simulator)
-      : des::Model(_simulator, "settime", nullptr),
+  explicit SetTimeComponent(des::Simulator* _simulator)
+      : des::Component(_simulator, "settime", nullptr),
         event_(this, static_cast<des::EventHandler>(
-            &SetTimeModel::ignoreEvent)) {
+            &SetTimeComponent::ignoreEvent)) {
     debug = true;
   }
 
@@ -73,15 +73,15 @@ u64 slowFutureCycle(des::Tick _now, des::Tick _period, des::Tick _phase,
   return tick;
 }
 
-TEST(ClockedModel, futureCycle) {
+TEST(Clocked, futureCycle) {
   const u64 SIMS = 100;
 
   des::Simulator sim;
-  des::ClockedModel a(&sim, "a", nullptr, 1000, 0);
-  des::ClockedModel b("b", &a);
-  des::ClockedModel c("c", &a, 1500, 500);
-  std::vector<des::ClockedModel*> m({&a, &b, &c});
-  SetTimeModel t(&sim);
+  des::Clocked a(&sim, "a", nullptr, 1000, 0);
+  des::Clocked b("b", &a);
+  des::Clocked c("c", &a, 1500, 500);
+  std::vector<des::Clocked*> m({&a, &b, &c});
+  SetTimeComponent t(&sim);
 
   ASSERT_EQ(a.baseName(), "a");
   ASSERT_EQ(a.fullName(), "a");
@@ -102,7 +102,7 @@ TEST(ClockedModel, futureCycle) {
     des::Tick now = sim.time().tick();
     for (u64 cyc = 1; cyc < 5; cyc++) {
       for (u64 idx = 0; idx < m.size(); idx++) {
-        des::ClockedModel* cm = m.at(idx);
+        des::Clocked* cm = m.at(idx);
         des::Tick period = cm->cyclePeriod();
         des::Tick phase = cm->cyclePhase();
         des::Tick cmfc = cm->futureCycle(cyc);

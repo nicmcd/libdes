@@ -28,27 +28,27 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_CLOCKEDMODEL_H_
-#define DES_CLOCKEDMODEL_H_
+#ifndef DES_CLOCKED_H_
+#define DES_CLOCKED_H_
 
 #include <prim/prim.h>
 
 #include <string>
 
-#include "des/Model.h"
+#include "des/Component.h"
 
 namespace des {
 
 class Simulator;
 
-class ClockedModel : public Model {
+class Clocked : public Component {
  public:
-  ClockedModel(const std::string& _name, const ClockedModel* _parent);
-  ClockedModel(const std::string& _name, const ClockedModel* _parent,
-               Tick _cyclePeriod, Tick _cyclePhase);
-  ClockedModel(Simulator* _simulator, const std::string& _name,
-               const Model* _parent, Tick _cyclePeriod, Tick _cyclePhase);
-  virtual ~ClockedModel();
+  Clocked(const std::string& _name, const Clocked* _parent);
+  Clocked(const std::string& _name, const Component* _parent,
+          Tick _cyclePeriod, Tick _cyclePhase);
+  Clocked(Simulator* _simulator, const std::string& _name,
+          const Component* _parent, Tick _cyclePeriod, Tick _cyclePhase);
+  virtual ~Clocked();
 
   Tick cyclePeriod() const;
   Tick cyclePhase() const;
@@ -61,4 +61,4 @@ class ClockedModel : public Model {
 
 }  // namespace des
 
-#endif  // DES_CLOCKEDMODEL_H_
+#endif  // DES_CLOCKED_H_

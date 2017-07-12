@@ -32,56 +32,59 @@
 
 #include <gtest/gtest.h>
 
-#include "des/Model.h"
+#include "des/Component.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
 
-class MyModel : public des::Model {
+class MyComponent : public des::Component {
  public:
-  explicit MyModel(des::Simulator* _sim)
-      : des::Model(_sim, "model", nullptr) {}
+  explicit MyComponent(des::Simulator* _sim)
+      : des::Component(_sim, "component", nullptr) {}
   void ignoreEvent(des::Event*) {}
 };
 
 TEST(Event, constructor1) {
   des::Simulator sim;
-  MyModel model(&sim);
+  MyComponent component(&sim);
   des::Event evt;
-  ASSERT_EQ(evt.model, nullptr);
+  ASSERT_EQ(evt.component, nullptr);
   ASSERT_EQ(evt.handler, nullptr);
   ASSERT_TRUE(evt.time ==  des::Time());
 }
 
 TEST(Event, constructor2) {
   des::Simulator sim;
-  MyModel model(&sim);
-  des::Event evt(&model,
-                 static_cast<des::EventHandler>(&MyModel::ignoreEvent));
-  ASSERT_EQ(evt.model, &model);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  MyComponent component(&sim);
+  des::Event evt(&component,
+                 static_cast<des::EventHandler>(&MyComponent::ignoreEvent));
+  ASSERT_EQ(evt.component, &component);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
+      &MyComponent::ignoreEvent));
   ASSERT_TRUE(evt.time == des::Time());
 }
 
 TEST(Event, constructor3) {
   des::Simulator sim;
-  MyModel model(&sim);
+  MyComponent component(&sim);
   des::Time etime(123456789, 9);
-  des::Event evt(&model,
-                 static_cast<des::EventHandler>(&MyModel::ignoreEvent),
+  des::Event evt(&component,
+                 static_cast<des::EventHandler>(&MyComponent::ignoreEvent),
                  etime);
-  ASSERT_EQ(evt.model, &model);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_EQ(evt.component, &component);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
+      &MyComponent::ignoreEvent));
   ASSERT_TRUE(evt.time == etime);
 }
 
 TEST(Event, constructor3b) {
   des::Simulator sim;
-  MyModel model(&sim);
-  des::Event evt(&model,
-                 static_cast<des::EventHandler>(&MyModel::ignoreEvent),
+  MyComponent component(&sim);
+  des::Event evt(&component,
+                 static_cast<des::EventHandler>(&MyComponent::ignoreEvent),
                  des::Time(123456789, 9));
-  ASSERT_EQ(evt.model, &model);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_EQ(evt.component, &component);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
+      &MyComponent::ignoreEvent));
   ASSERT_TRUE(evt.time == des::Time(123456789, 9));
 }
 
@@ -114,12 +117,13 @@ TEST(Event, eventCompare) {
 
 TEST(Event, item) {
   des::Simulator sim;
-  MyModel model(&sim);
+  MyComponent component(&sim);
   des::ItemEvent<u32> evt(
-      &model, static_cast<des::EventHandler>(&MyModel::ignoreEvent),
+      &component, static_cast<des::EventHandler>(&MyComponent::ignoreEvent),
       des::Time(123456789, 9), 0xDEAFBEEF);
-  ASSERT_EQ(evt.model, &model);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(&MyModel::ignoreEvent));
+  ASSERT_EQ(evt.component, &component);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
+      &MyComponent::ignoreEvent));
   ASSERT_TRUE(evt.time == des::Time(123456789, 9));
   ASSERT_EQ(evt.item, 0xDEAFBEEF);
 }

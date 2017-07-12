@@ -44,6 +44,8 @@ constexpr u64 CLPAD(u64 _objSize) {
       _objSize;
 }
 
+// TODO(nicmcd): The following are not in use. Verify they aren't needed.
+
 // this creates cache line aligned and padded variables
 template <typename T, bool = false>
 struct AlignedAndPaddedStruct {

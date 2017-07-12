@@ -39,7 +39,7 @@
 #include <thread>
 
 #include "des/Event.h"
-#include "des/Model.h"
+#include "des/Component.h"
 #include "des/Observer.h"
 
 namespace des {
@@ -56,6 +56,7 @@ struct alignas(CACHELINE_SIZE) Executer {
   char padding2[CLPAD(sizeof(minTimeStep))];
 };
 
+// this creates a thread local version of Executer for each thread
 static thread_local Executer exeState;
 
 
@@ -117,38 +118,39 @@ void Simulator::setObservingPower(u64 _expPow2Events) {
   observingMask_ = 1 << _expPow2Events;
 }
 
-void Simulator::addModel(Model* _model) {
+void Simulator::addComponent(Component* _component) {
   static u32 executer = 0;
 
-  if (!models_.insert(std::make_pair(_model->fullName(), _model)).second) {
+  if (!components_.insert(std::make_pair(_component->fullName(),
+                                         _component)).second) {
     fprintf(stderr, "duplicate component name detected: %s\n",
-            _model->fullName().c_str());
+            _component->fullName().c_str());
     assert(false);
   }
-  if (toBeDebugged_.count(_model->fullName()) == 1) {
-    _model->debug = true;
-    u64 res = toBeDebugged_.erase(_model->fullName());
+  if (toBeDebugged_.count(_component->fullName()) == 1) {
+    _component->debug = true;
+    u64 res = toBeDebugged_.erase(_component->fullName());
     (void)res;
     assert(res == 1);
   }
 
-  _model->executer = executer;
+  _component->executer = executer;
   executer = (executer + 1) % numThreads_;
 }
 
-Model* Simulator::getModel(const std::string& _fullName) const {
-  return models_.at(_fullName);
+Component* Simulator::getComponent(const std::string& _fullName) const {
+  return components_.at(_fullName);
 }
 
-void Simulator::removeModel(const std::string& _fullName) {
-  models_.at(_fullName)->executer = U32_MAX;
-  u64 res = models_.erase(_fullName);
+void Simulator::removeComponent(const std::string& _fullName) {
+  components_.at(_fullName)->executer = U32_MAX;
+  u64 res = components_.erase(_fullName);
   (void)res;
   assert(res == 1);
 }
 
-u64 Simulator::numModels() const {
-  return models_.size();
+u64 Simulator::numComponents() const {
+  return components_.size();
 }
 
 void Simulator::addDebugName(const std::string& _fullName) {
@@ -158,7 +160,8 @@ void Simulator::addDebugName(const std::string& _fullName) {
 }
 
 void Simulator::debugCheck() {
-  // ensure that all Models that were marked to be debugged got accounted for
+  // ensure that all Components that were marked to be debugged got accounted
+  //  for during component construction
   for (auto it = toBeDebugged_.begin(); it != toBeDebugged_.end(); ++it) {
     fprintf(stderr, "%s is an invalid component name\n", it->c_str());
   }
@@ -174,7 +177,7 @@ void Simulator::addEvent(Event* _event) {
   assert(eventTimeStep > timeStep);
 
   // push the event into the queue
-  u32 id = _event->model->executer;
+  u32 id = _event->component->executer;
   if (id != exeState.id) {
     // this event is crossing threads, put it into the oqueue
     MpScQueue& oqueue = queueSets_[id].oqueue;
@@ -324,9 +327,9 @@ void Simulator::executer(u32 _id) {
       }
 
       // execute the event
-      Model* model = event->model;
+      Component* component = event->component;
       EventHandler handler = event->handler;
-      (model->*handler)(event);
+      (component->*handler)(event);
       executed++;
     }
 

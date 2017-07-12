@@ -28,55 +28,58 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ClockedModel.h"
+#ifndef DES_COMPONENT_H_
+#define DES_COMPONENT_H_
 
-#include <cassert>
+#include <prim/prim.h>
 
-#include "des/Simulator.h"
+#include <string>
+
+#include "des/Time.h"
 
 namespace des {
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent)
-    : ClockedModel(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
-                   _parent->cyclePhase_) {}
+class Logger;
+class Simulator;
 
-ClockedModel::ClockedModel(const std::string& _name,
-                           const ClockedModel* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : ClockedModel(_parent->simulator, _name, _parent, _cyclePeriod,
-                   _cyclePhase) {}
+class Component {
+ public:
+  // this constructor inherits the Simulator from the parent
+  Component(const std::string& _name, const Component* _parent);
+  // this is the full constructor
+  Component(Simulator* _simulator, const std::string& _name,
+            const Component* _parent);
+  virtual ~Component();
+  const std::string& baseName() const;
+  std::string fullName() const;
 
-ClockedModel::ClockedModel(Simulator* _simulator, const std::string& _name,
-                           const Model* _parent, Tick _cyclePeriod,
-                           Tick _cyclePhase)
-    : Model(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
-}
+  Simulator* simulator;
+  bool debug;
+  u32 executer;
 
-ClockedModel::~ClockedModel() {}
+ private:
+  std::string name_;
+  const Component* parent_;
+};
 
-Tick ClockedModel::cyclePeriod() const {
-  return cyclePeriod_;
-}
+#ifndef NDEBUGLOG
+s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
+              const Time& _time, const char* _format, ...);
 
-Tick ClockedModel::cyclePhase() const {
-  return cyclePhase_;
-}
+#define dlogf(...) (                                                    \
+    ((debug) && (simulator->getLogger())) ?                             \
+    (des::debuglogf(simulator->getLogger(),                             \
+                    __func__,                                           \
+                    __LINE__,                                           \
+                    fullName().c_str(),                                 \
+                    simulator->time(),                                  \
+                    __VA_ARGS__)) : (0))
+#else  // NDEBUGLOG
 
-Tick ClockedModel::futureCycle(u32 _cycles) const {
-  assert(_cycles > 0);
-  Tick tick = simulator->time().tick();
-  Tick rem = tick % cyclePeriod_;
-  if (rem != cyclePhase_) {
-    tick += (cyclePhase_ - rem);
-    if (rem > cyclePhase_) {
-      tick += cyclePeriod_;
-    }
-    _cycles--;
-  }
-  return tick + (cyclePeriod_ * _cycles);
-}
+#define dlogf(...)
+
+#endif  // NDEBUGLOG
 
 }  // namespace des
+
+#endif  // DES_COMPONENT_H_

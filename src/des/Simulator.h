@@ -50,7 +50,7 @@
 namespace des {
 
 class Logger;
-class Model;
+class Component;
 class Observer;
 
 class Simulator {
@@ -72,11 +72,11 @@ class Simulator {
   void setObservingIntervel(f64 _interval);
   void setObservingPower(u64 _expPow2Events);
 
-  // models and debugging
-  void addModel(Model* _model);
-  Model* getModel(const std::string& _fullName) const;
-  void removeModel(const std::string& _fullName);
-  u64 numModels() const;
+  // components and debugging
+  void addComponent(Component* _component);
+  Component* getComponent(const std::string& _fullName) const;
+  void removeComponent(const std::string& _fullName);
+  u64 numComponents() const;
   void addDebugName(const std::string& _fullName);
   void debugCheck();
 
@@ -186,8 +186,8 @@ class Simulator {
   f64 observingInterval_;
   u64 observingMask_;
 
-  // models and debugging names
-  std::unordered_map<std::string, Model*> models_;
+  // components and debugging names
+  std::unordered_map<std::string, Component*> components_;
   std::unordered_set<std::string> toBeDebugged_;
 };
 

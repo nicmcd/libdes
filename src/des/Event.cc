@@ -32,19 +32,19 @@
 
 #include <prim/prim.h>
 
-#include "des/Model.h"
+#include "des/Component.h"
 #include "des/Time.h"
 
 namespace des {
 
 Event::Event()
-    : model(nullptr), handler(nullptr), time(), next(nullptr) {}
+    : component(nullptr), handler(nullptr), time(), next(nullptr) {}
 
-Event::Event(Model* _model, EventHandler _handler)
-    : model(_model), handler(_handler), time(), next(nullptr) {}
+Event::Event(Component* _component, EventHandler _handler)
+    : component(_component), handler(_handler), time(), next(nullptr) {}
 
-Event::Event(Model* _model, EventHandler _handler, Time _time)
-    : model(_model), handler(_handler), time(_time), next(nullptr) {}
+Event::Event(Component* _component, EventHandler _handler, Time _time)
+    : component(_component), handler(_handler), time(_time), next(nullptr) {}
 
 Event::~Event() {}
 

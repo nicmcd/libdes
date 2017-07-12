@@ -28,83 +28,55 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/Model.h"
+#include "des/Clocked.h"
 
 #include <cassert>
-#include <cstdarg>
 
-#include "des/Logger.h"
 #include "des/Simulator.h"
 
 namespace des {
 
-Model::Model(const std::string& _name, const Model* _parent)
-    : Model(_parent->simulator, _name, _parent) {}
+Clocked::Clocked(const std::string& _name,
+                 const Clocked* _parent)
+    : Clocked(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
+              _parent->cyclePhase_) {}
 
-Model::Model(Simulator* _simulator, const std::string& _name,
-             const Model* _parent)
-    : simulator(_simulator), debug(false), executer(U32_MAX),
-      name_(_name), parent_(_parent) {
-  simulator->addModel(this);
+Clocked::Clocked(const std::string& _name,
+                 const Component* _parent, Tick _cyclePeriod,
+                 Tick _cyclePhase)
+    : Clocked(_parent->simulator, _name, _parent, _cyclePeriod,
+              _cyclePhase) {}
+
+Clocked::Clocked(Simulator* _simulator, const std::string& _name,
+                 const Component* _parent, Tick _cyclePeriod,
+                 Tick _cyclePhase)
+    : Component(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
+      cyclePhase_(_cyclePhase) {
+  assert(cyclePhase_ < cyclePeriod_);
 }
 
-Model::~Model() {
-  simulator->removeModel(fullName());
+Clocked::~Clocked() {}
+
+Tick Clocked::cyclePeriod() const {
+  return cyclePeriod_;
 }
 
-const std::string& Model::baseName() const {
-  return name_;
+Tick Clocked::cyclePhase() const {
+  return cyclePhase_;
 }
 
-std::string Model::fullName() const {
-  if (parent_) {
-    std::string name(parent_->fullName());
-    name += '.';
-    name += name_;
-    return name;
-  } else {
-    return name_;
+Tick Clocked::futureCycle(u32 _cycles) const {
+  assert(_cycles > 0);
+  Tick tick = simulator->time().tick();
+  Tick rem = tick % cyclePeriod_;
+  if (rem != cyclePhase_) {
+    tick += (cyclePhase_ - rem);
+    if (rem > cyclePhase_) {
+      tick += cyclePeriod_;
+    }
+    _cycles--;
   }
+  return tick + (cyclePeriod_ * _cycles);
 }
-
-#ifndef NDEBUGLOG
-s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
-              const Time& _time, const char* _format, ...) {
-  // create a buffer to create the string in
-  s32 budget = 2000;
-  char* buf = new char[budget];
-  char* ptr = buf;
-  s32 res;
-
-  // format the line header
-  res = snprintf(ptr, budget, "[%s] %s:%s:%i | ", _time.toString().c_str(),
-                 _name, _func, _line);
-  assert((res >= 0) && (res < budget));
-  ptr += res;
-  budget -= res;
-
-  // add the rest of the contents
-  va_list args;
-  va_start(args, _format);
-  res = vsnprintf(ptr, budget, _format, args);
-  va_end(args);
-  assert((res >= 0) && (res < budget));
-  ptr += res;
-  budget -= res;
-
-  // add the line ending
-  assert(budget >= 2);
-  ptr[0] = '\n';
-  ptr[1] = '\0';
-  ptr += 2;
-
-  // give string to logger to print
-  _logger->log(buf, ptr - buf - 1);
-
-  // delete the buffer and return succesfully
-  delete[] buf;
-  return 0;
-}
-#endif  // NDEBUGLOG
 
 }  // namespace des
