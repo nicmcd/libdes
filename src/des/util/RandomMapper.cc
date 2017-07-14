@@ -28,16 +28,18 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_DES_H_
-#define DES_DES_H_
+#include "des/util/RandomMapper.h"
 
-#include "des/Clocked.h"
-#include "des/Component.h"
-#include "des/Event.h"
-#include "des/Logger.h"
-#include "des/Mapper.h"
-#include "des/Observer.h"
-#include "des/Simulator.h"
-#include "des/Time.h"
+namespace des {
 
-#endif  // DES_DES_H_
+RandomMapper::RandomMapper(rnd::Random* _random)
+    : random_(_random) {}
+
+RandomMapper::~RandomMapper() {}
+
+u32 RandomMapper::map(u32 _numExecuters, const Component* _component) {
+  (void)_component;  // unused
+  return random_->nextU64(0, _numExecuters - 1);
+}
+
+}  // namespace des

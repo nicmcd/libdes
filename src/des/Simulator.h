@@ -49,18 +49,20 @@
 
 namespace des {
 
+class Mapper;
 class Logger;
 class Component;
 class Observer;
 
 class Simulator {
  public:
+  // construction and desctruction
   Simulator();
-  explicit Simulator(u32 _numThreads);
+  Simulator(u32 _numExecuters, Mapper* _mapper);
   ~Simulator();
 
   // general info
-  u32 threads() const;
+  u32 executers() const;
   Time time() const;
 
   // logger for global access
@@ -85,15 +87,15 @@ class Simulator {
   void simulate();
 
  protected:
-  // this is used for subclasses to generate thread specific data structures
-  u32 threadId() const;
+  // this is used for subclasses to generate executer specific data structures
+  u32 executerId() const;
 
  private:
   // this defines the type of queue used for events
   typedef std::priority_queue<Event*, std::vector<Event*>,
                               EventComparator> EventQueue;
 
-  // this defines a set of event queues for each executer thread
+  // this defines a set of event queues for each executer
   //  these are cache line aligned and padded individually
   struct alignas(CACHELINE_SIZE) QueueSet {
     // this is an initial padding incase the object is dynamically allocated,
@@ -171,11 +173,11 @@ class Simulator {
   void executer(u32 _id);
 
   // info
-  const u32 numThreads_;
+  const u32 numExecuters_;
   State state_;
   Stats stats_;
 
-  // per-thread queue sets
+  // per-executer queue sets
   QueueSet* queueSets_;
 
   // logger
@@ -189,6 +191,9 @@ class Simulator {
   // components and debugging names
   std::unordered_map<std::string, Component*> components_;
   std::unordered_set<std::string> toBeDebugged_;
+
+  // component to executer mapping
+  Mapper* mapper_;
 };
 
 }  // namespace des

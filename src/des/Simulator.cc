@@ -40,14 +40,15 @@
 
 #include "des/Event.h"
 #include "des/Component.h"
+#include "des/Mapper.h"
 #include "des/Observer.h"
 
 namespace des {
 
 // these variables are read/write variables that are thread local
 //  these are cache line aligned and padded individually
-struct alignas(CACHELINE_SIZE) Executer {
-  // this is the executer id using for thread-level multiplexing
+struct alignas(CACHELINE_SIZE) ExecuterState {
+  // this is the executer id using for executer-level multiplexing
   u32 id;
   char padding1[CLPAD(sizeof(id))];
 
@@ -56,20 +57,21 @@ struct alignas(CACHELINE_SIZE) Executer {
   char padding2[CLPAD(sizeof(minTimeStep))];
 };
 
-// this creates a thread local version of Executer for each thread
-static thread_local Executer exeState;
+// this creates a thread local version of ExecuterState for each executer
+static thread_local ExecuterState exeState;
 
 
 Simulator::Simulator()
-    : Simulator(1) {}
+    : Simulator(1, nullptr) {}
 
-Simulator::Simulator(u32 _numThreads)
-    : numThreads_(_numThreads) {
+Simulator::Simulator(u32 _numExecuters, Mapper* _mapper)
+    : numExecuters_(_numExecuters), mapper_(_mapper) {
   // check inputs
-  assert(numThreads_ > 0);
+  assert(numExecuters_ > 0);
+  assert(numExecuters_ == 1 || _mapper);
 
   // create the event queues
-  queueSets_ = new QueueSet[numThreads_ + 1];  // +1 for tail padding
+  queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding
 
   // initialize the state
   state_.running.store(false, std::memory_order_release);
@@ -90,8 +92,8 @@ Simulator::~Simulator() {
   delete[] queueSets_;
 }
 
-u32 Simulator::threads() const {
-  return numThreads_;
+u32 Simulator::executers() const {
+  return numExecuters_;
 }
 
 Time Simulator::time() const {
@@ -119,14 +121,15 @@ void Simulator::setObservingPower(u64 _expPow2Events) {
 }
 
 void Simulator::addComponent(Component* _component) {
-  static u32 executer = 0;
-
+  // duplicate name detection
   if (!components_.insert(std::make_pair(_component->fullName(),
                                          _component)).second) {
     fprintf(stderr, "duplicate component name detected: %s\n",
             _component->fullName().c_str());
     assert(false);
   }
+
+  // set debug if needed
   if (toBeDebugged_.count(_component->fullName()) == 1) {
     _component->debug = true;
     u64 res = toBeDebugged_.erase(_component->fullName());
@@ -134,8 +137,13 @@ void Simulator::addComponent(Component* _component) {
     assert(res == 1);
   }
 
-  _component->executer = executer;
-  executer = (executer + 1) % numThreads_;
+  // executer mapping
+  if (numExecuters_ == 1) {
+    _component->executer = 0;
+  } else {
+    _component->executer = mapper_->map(numExecuters_, _component);
+    assert(_component->executer < numExecuters_);
+  }
 }
 
 Component* Simulator::getComponent(const std::string& _fullName) const {
@@ -179,11 +187,11 @@ void Simulator::addEvent(Event* _event) {
   // push the event into the queue
   u32 id = _event->component->executer;
   if (id != exeState.id) {
-    // this event is crossing threads, put it into the oqueue
+    // this event is crossing executers, put it into the oqueue
     MpScQueue& oqueue = queueSets_[id].oqueue;
     oqueue.push(_event);
   } else {
-    // this event is NOT crossing threads, put it directly into the pqueue
+    // this event is NOT crossing executers, put it directly into the pqueue
     EventQueue& pqueue = queueSets_[id].pqueue;
     pqueue.push(_event);
   }
@@ -199,12 +207,12 @@ void Simulator::simulate() {
   // set the epoch to false(0)
   state_.epoch.store(false, std::memory_order_release);
 
-  // set the yetToArrive to numThreads_
-  state_.yetToArrive.store(numThreads_, std::memory_order_release);
+  // set the yetToArrive to numExecuters_
+  state_.yetToArrive.store(numExecuters_, std::memory_order_release);
 
   // find the first time to simulate
   TimeStep firstTimeStep = TIMESTEP_INV;
-  for (u32 id = 0; id < numThreads_; id++) {
+  for (u32 id = 0; id < numExecuters_; id++) {
     MpScQueue& oqueue = queueSets_[id].oqueue;
     EventQueue& pqueue = queueSets_[id].pqueue;
 
@@ -232,7 +240,7 @@ void Simulator::simulate() {
 
   // create threads for executers and run
   std::vector<std::thread> threads;
-  for (u32 id = 0; id < numThreads_; id++) {
+  for (u32 id = 0; id < numExecuters_; id++) {
     threads.push_back(std::thread(&Simulator::executer, this, id));
   }
 
@@ -243,7 +251,7 @@ void Simulator::simulate() {
   stats_.lastRealTime = startTime;
 
   // now wait for all executer threads to complete
-  for (u32 id = 0; id < numThreads_; id++) {
+  for (u32 id = 0; id < numExecuters_; id++) {
     threads.at(id).join();
   }
 
@@ -267,7 +275,7 @@ void Simulator::simulate() {
   }
 }
 
-u32 Simulator::threadId() const {
+u32 Simulator::executerId() const {
   return exeState.id;
 }
 
@@ -415,7 +423,7 @@ void Simulator::executer(u32 _id) {
           TIMESTEP_INV, std::memory_order_release);
 
       // reset yetToArrive
-      state_.yetToArrive.store(numThreads_, std::memory_order_release);
+      state_.yetToArrive.store(numExecuters_, std::memory_order_release);
 
       // check if the simulation is complete
       if (done) {

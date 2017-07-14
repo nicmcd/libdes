@@ -28,16 +28,23 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_DES_H_
-#define DES_DES_H_
+#ifndef DES_MAPPER_H_
+#define DES_MAPPER_H_
 
-#include "des/Clocked.h"
-#include "des/Component.h"
-#include "des/Event.h"
-#include "des/Logger.h"
-#include "des/Mapper.h"
-#include "des/Observer.h"
-#include "des/Simulator.h"
-#include "des/Time.h"
+#include <prim/prim.h>
 
-#endif  // DES_DES_H_
+namespace des {
+
+class Component;
+
+class Mapper {
+ public:
+  Mapper();
+  virtual ~Mapper();
+
+  virtual u32 map(u32 _numExecuters, const Component* _component) = 0;
+};
+
+}  // namespace des
+
+#endif  // DES_MAPPER_H_

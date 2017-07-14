@@ -28,16 +28,20 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_DES_H_
-#define DES_DES_H_
+#include "des/util/RoundRobinMapper.h"
 
-#include "des/Clocked.h"
-#include "des/Component.h"
-#include "des/Event.h"
-#include "des/Logger.h"
-#include "des/Mapper.h"
-#include "des/Observer.h"
-#include "des/Simulator.h"
-#include "des/Time.h"
+namespace des {
 
-#endif  // DES_DES_H_
+RoundRobinMapper::RoundRobinMapper()
+    : next_(0) {}
+
+RoundRobinMapper::~RoundRobinMapper() {}
+
+u32 RoundRobinMapper::map(u32 _numExecuters, const Component* _component) {
+  (void)_component;  // unused
+  u32 exe = next_;
+  next_ = (next_ + 1) % _numExecuters;
+  return exe;
+}
+
+}  // namespace des

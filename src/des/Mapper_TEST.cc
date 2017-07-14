@@ -28,16 +28,63 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_DES_H_
-#define DES_DES_H_
-
-#include "des/Clocked.h"
-#include "des/Component.h"
-#include "des/Event.h"
-#include "des/Logger.h"
 #include "des/Mapper.h"
-#include "des/Observer.h"
-#include "des/Simulator.h"
-#include "des/Time.h"
 
-#endif  // DES_DES_H_
+#include <gtest/gtest.h>
+#include <prim/prim.h>
+
+#include <des/des.h>
+
+class TestMapper : public des::Mapper {
+ public:
+  TestMapper() : count(0) {}
+  ~TestMapper() {}
+  u32 map(u32 _numExecuters, const des::Component* _component) override {
+    count++;
+    return std::stoul(_component->baseName()) % _numExecuters;
+  }
+  u32 count;
+};
+
+class TestComponent : public des::Component {
+ public:
+  TestComponent(des::Simulator* _simulator, const std::string& _name)
+      : des::Component(_simulator, _name, nullptr) {}
+  ~TestComponent() {}
+};
+
+
+TEST(Mapper, simulatorAssignment) {
+  for (u32 numExecuters : std::vector<u32>({1, 2, 10, 100})) {
+    // create simulator
+    TestMapper* mapper = new TestMapper();
+    des::Simulator* sim = new des::Simulator(numExecuters, mapper);
+
+    // create components
+    std::vector<des::Component*> comps;
+    const u32 kNumComps = 10000;
+    for (u32 c = 0; c < kNumComps; c++) {
+      comps.push_back(new TestComponent(sim, std::to_string(c)));
+    }
+
+    // verify component executer assignment
+    for (u32 c = 0; c < kNumComps; c++) {
+      u32 exp = std::stoull(comps.at(c)->baseName()) % numExecuters;
+      ASSERT_EQ(comps.at(c)->executer, exp);
+    }
+
+    // verify mapper count
+    if (numExecuters > 1) {
+      ASSERT_EQ(mapper->count, kNumComps);
+    } else {
+      ASSERT_EQ(mapper->count, 0u);
+    }
+
+    // cleanup
+    for (u32 c = 0; c < kNumComps; c++) {
+      delete comps.at(c);
+    }
+    delete sim;
+    delete mapper;
+  }
+}

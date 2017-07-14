@@ -7,9 +7,11 @@ SOURCE_BASE   := src
 
 #--------------------- External Libraries -------------------------------------#
 HEADER_DIRS   := \
-	../libprim/inc
+	../libprim/inc \
+	../librnd/inc
 STATIC_LIBS   := \
-	../libprim/bld/libprim.a
+	../libprim/bld/libprim.a \
+	../librnd/bld/librnd.a
 
 #--------------------- Cpp Lint -----------------------------------------------#
 LINT          := $(HOME)/.makeccpp/cpplint/cpplint.py
