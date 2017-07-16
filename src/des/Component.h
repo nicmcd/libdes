@@ -80,7 +80,7 @@ s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
     (des::debuglogf(simulator->getLogger(),                             \
                     __func__,                                           \
                     __LINE__,                                           \
-                    fullName().c_str(),                                 \
+                    fullname().c_str(),                                 \
                     simulator->time(),                                  \
                     __VA_ARGS__)) : (0))
 #else  // NDEBUGLOG

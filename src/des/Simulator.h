@@ -76,10 +76,10 @@ class Simulator {
 
   // components and debugging
   void addComponent(Component* _component);
-  Component* getComponent(const std::string& _fullName) const;
-  void removeComponent(const std::string& _fullName);
+  Component* getComponent(const std::string& _fullname) const;
+  void removeComponent(const std::string& _fullname);
   u64 numComponents() const;
-  void addDebugName(const std::string& _fullName);
+  void addDebugName(const std::string& _fullname);
   void debugCheck();
 
   // events and event handling
