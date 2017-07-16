@@ -105,8 +105,12 @@ TEST(Clocked, futureCycle) {
         des::Clocked* cm = m.at(idx);
         des::Tick period = cm->cyclePeriod();
         des::Tick phase = cm->cyclePhase();
+        u64 cycle = cm->cycle();
+        ASSERT_EQ(cycle, (now + phase) / period);
         des::Tick cmfc = cm->futureCycle(cyc);
         des::Tick sfc = slowFutureCycle(now, period, phase, cyc);
+        // printf("period=%lu phase=%lu now=%lu cycles=%lu, cmfc=%lu\n",
+        //        period, phase, now, cyc, cmfc);
         ASSERT_EQ(cmfc, sfc);
       }
     }

@@ -57,6 +57,7 @@ class Clocked : public Component {
 
   Tick cyclePeriod() const;
   Tick cyclePhase() const;
+  u64 cycle() const;
   Tick futureCycle(u32 _cycles) const;
 
  private:

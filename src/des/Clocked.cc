@@ -66,6 +66,10 @@ Tick Clocked::cyclePhase() const {
   return cyclePhase_;
 }
 
+u64 Clocked::cycle() const {
+  return (simulator->time().tick() + cyclePhase_) / cyclePeriod_;
+}
+
 Tick Clocked::futureCycle(u32 _cycles) const {
   assert(_cycles > 0);
   Tick tick = simulator->time().tick();
