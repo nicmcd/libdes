@@ -52,14 +52,17 @@ class Component {
   virtual ~Component();
   const std::string& baseName() const;
   std::string fullName() const;
+  u32 executer() const;
 
-  Simulator* simulator;
+  mutable Simulator* simulator;
   bool debug;
-  u32 executer;
 
  private:
   std::string name_;
   const Component* parent_;
+  u32 executer_;
+
+  friend class Simulator;
 };
 
 #ifndef NDEBUGLOG

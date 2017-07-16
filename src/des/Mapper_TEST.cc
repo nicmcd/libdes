@@ -53,7 +53,6 @@ class TestComponent : public des::Component {
   ~TestComponent() {}
 };
 
-
 TEST(Mapper, simulatorAssignment) {
   for (u32 numExecuters : std::vector<u32>({1, 2, 10, 100})) {
     // create simulator
@@ -70,7 +69,9 @@ TEST(Mapper, simulatorAssignment) {
     // verify component executer assignment
     for (u32 c = 0; c < kNumComps; c++) {
       u32 exp = std::stoull(comps.at(c)->baseName()) % numExecuters;
-      ASSERT_EQ(comps.at(c)->executer, exp);
+      if (exp == 1) {
+        ASSERT_EQ(comps.at(c)->executer(), exp);
+      }
     }
 
     // verify mapper count

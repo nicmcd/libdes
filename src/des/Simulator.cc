@@ -139,10 +139,10 @@ void Simulator::addComponent(Component* _component) {
 
   // executer mapping
   if (numExecuters_ == 1) {
-    _component->executer = 0;
+    _component->executer_ = 0;
   } else {
-    _component->executer = mapper_->map(numExecuters_, _component);
-    assert(_component->executer < numExecuters_);
+    _component->executer_ = mapper_->map(numExecuters_, _component);
+    assert(_component->executer_ < numExecuters_);
   }
 }
 
@@ -151,7 +151,7 @@ Component* Simulator::getComponent(const std::string& _fullName) const {
 }
 
 void Simulator::removeComponent(const std::string& _fullName) {
-  components_.at(_fullName)->executer = U32_MAX;
+  components_.at(_fullName)->executer_ = U32_MAX;
   u64 res = components_.erase(_fullName);
   (void)res;
   assert(res == 1);
@@ -185,7 +185,7 @@ void Simulator::addEvent(Event* _event) {
   assert(eventTimeStep > timeStep);
 
   // push the event into the queue
-  u32 id = _event->component->executer;
+  u32 id = _event->component->executer_;
   if (id != exeState.id) {
     // this event is crossing executers, put it into the oqueue
     MpScQueue& oqueue = queueSets_[id].oqueue;

@@ -43,8 +43,8 @@ Component::Component(const std::string& _name, const Component* _parent)
 
 Component::Component(Simulator* _simulator, const std::string& _name,
                      const Component* _parent)
-    : simulator(_simulator), debug(false), executer(U32_MAX),
-      name_(_name), parent_(_parent) {
+    : simulator(_simulator), debug(false), name_(_name), parent_(_parent),
+      executer_(U32_MAX) {
   simulator->addComponent(this);
 }
 
@@ -65,6 +65,10 @@ std::string Component::fullName() const {
   } else {
     return name_;
   }
+}
+
+u32 Component::executer() const {
+  return executer_;
 }
 
 #ifndef NDEBUGLOG
