@@ -28,64 +28,39 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/Mapper.h"
+#include "des/Component.h"
 
 #include <gtest/gtest.h>
-#include <prim/prim.h>
 
-#include <des/des.h>
-
-class TestMapper : public des::Mapper {
- public:
-  TestMapper() : count(0) {}
-  ~TestMapper() {}
-  u32 map(u32 _numExecuters, const des::Component* _component) override {
-    count++;
-    return std::stoul(_component->basename()) % _numExecuters;
-  }
-  u32 count;
-};
+#include "des/des.h"
 
 class TestComponent : public des::Component {
  public:
+  TestComponent(const std::string& _name, const Component* _parent)
+      : des::Component(_name, _parent) {}
   TestComponent(des::Simulator* _simulator, const std::string& _name)
       : des::Component(_simulator, _name) {}
   ~TestComponent() {}
 };
 
-TEST(Mapper, simulatorAssignment) {
-  for (u32 numExecuters : std::vector<u32>({1, 2, 10, 100})) {
-    // create simulator
-    TestMapper* mapper = new TestMapper();
-    des::Simulator* sim = new des::Simulator(numExecuters, mapper);
+TEST(Component, construct) {
+  des::Simulator sim;
 
-    // create components
-    std::vector<des::Component*> comps;
-    const u32 kNumComps = 10000;
-    for (u32 c = 0; c < kNumComps; c++) {
-      comps.push_back(new TestComponent(sim, std::to_string(c)));
-    }
+  TestComponent tc1(&sim, "top");
+  ASSERT_EQ(tc1.basename(), "top");
+  ASSERT_EQ(tc1.fullname(), "top");
+  ASSERT_EQ(tc1.parent(), nullptr);
+  ASSERT_EQ(tc1.simulator, &sim);
 
-    // verify component executer assignment
-    for (u32 c = 0; c < kNumComps; c++) {
-      u32 exp = std::stoull(comps.at(c)->basename()) % numExecuters;
-      if (exp == 1) {
-        ASSERT_EQ(comps.at(c)->executer(), exp);
-      }
-    }
+  TestComponent tc2("left", &tc1);
+  ASSERT_EQ(tc2.basename(), "left");
+  ASSERT_EQ(tc2.fullname(), "top.left");
+  ASSERT_EQ(tc2.parent(), &tc1);
+  ASSERT_EQ(tc2.simulator, &sim);
 
-    // verify mapper count
-    if (numExecuters > 1) {
-      ASSERT_EQ(mapper->count, kNumComps);
-    } else {
-      ASSERT_EQ(mapper->count, 0u);
-    }
-
-    // cleanup
-    for (u32 c = 0; c < kNumComps; c++) {
-      delete comps.at(c);
-    }
-    delete sim;
-    delete mapper;
-  }
+  TestComponent tc3("right", &tc1);
+  ASSERT_EQ(tc3.basename(), "right");
+  ASSERT_EQ(tc3.fullname(), "top.right");
+  ASSERT_EQ(tc3.parent(), &tc1);
+  ASSERT_EQ(tc3.simulator, &sim);
 }

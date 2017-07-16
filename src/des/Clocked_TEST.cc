@@ -44,7 +44,7 @@
 class SetTimeComponent : public des::Component {
  public:
   explicit SetTimeComponent(des::Simulator* _simulator)
-      : des::Component(_simulator, "settime", nullptr),
+      : des::Component(_simulator, "settime"),
         event_(this, static_cast<des::EventHandler>(
             &SetTimeComponent::ignoreEvent)) {
     debug = true;
@@ -77,24 +77,24 @@ TEST(Clocked, futureCycle) {
   const u64 SIMS = 100;
 
   des::Simulator sim;
-  des::Clocked a(&sim, "a", nullptr, 1000, 0);
+  des::Clocked a(&sim, "a", 1000, 0);
   des::Clocked b("b", &a);
   des::Clocked c("c", &a, 1500, 500);
   std::vector<des::Clocked*> m({&a, &b, &c});
   SetTimeComponent t(&sim);
 
-  ASSERT_EQ(a.baseName(), "a");
-  ASSERT_EQ(a.fullName(), "a");
+  ASSERT_EQ(a.basename(), "a");
+  ASSERT_EQ(a.fullname(), "a");
   ASSERT_EQ(a.cyclePeriod(), 1000u);
   ASSERT_EQ(a.cyclePhase(), 0u);
 
-  ASSERT_EQ(b.baseName(), "b");
-  ASSERT_EQ(b.fullName(), "a.b");
+  ASSERT_EQ(b.basename(), "b");
+  ASSERT_EQ(b.fullname(), "a.b");
   ASSERT_EQ(b.cyclePeriod(), 1000u);
   ASSERT_EQ(b.cyclePhase(), 0u);
 
-  ASSERT_EQ(c.baseName(), "c");
-  ASSERT_EQ(c.fullName(), "a.c");
+  ASSERT_EQ(c.basename(), "c");
+  ASSERT_EQ(c.fullname(), "a.c");
   ASSERT_EQ(c.cyclePeriod(), 1500u);
   ASSERT_EQ(c.cyclePhase(), 500u);
 

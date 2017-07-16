@@ -38,37 +38,44 @@
 
 namespace des {
 
+Component::Component(Simulator* _simulator, const std::string& _name)
+    : Component(_simulator, _name, nullptr) {}
+
 Component::Component(const std::string& _name, const Component* _parent)
     : Component(_parent->simulator, _name, _parent) {}
 
-Component::Component(Simulator* _simulator, const std::string& _name,
-                     const Component* _parent)
-    : simulator(_simulator), debug(false), name_(_name), parent_(_parent),
-      executer_(U32_MAX) {
-  simulator->addComponent(this);
-}
-
 Component::~Component() {
-  simulator->removeComponent(fullName());
+  simulator->removeComponent(fullname());
 }
 
-const std::string& Component::baseName() const {
-  return name_;
+const std::string& Component::basename() const {
+  return basename_;
 }
 
-std::string Component::fullName() const {
+std::string Component::fullname() const {
   if (parent_) {
-    std::string name(parent_->fullName());
+    std::string name(parent_->fullname());
     name += '.';
-    name += name_;
+    name += basename_;
     return name;
   } else {
-    return name_;
+    return basename_;
   }
+}
+
+const Component* Component::parent() const {
+  return parent_;
 }
 
 u32 Component::executer() const {
   return executer_;
+}
+
+Component::Component(Simulator* _simulator, const std::string& _name,
+                     const Component* _parent)
+    : simulator(_simulator), debug(false), basename_(_name), parent_(_parent),
+      executer_(U32_MAX) {
+  simulator->addComponent(this);
 }
 
 #ifndef NDEBUGLOG

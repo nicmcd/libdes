@@ -122,17 +122,17 @@ void Simulator::setObservingPower(u64 _expPow2Events) {
 
 void Simulator::addComponent(Component* _component) {
   // duplicate name detection
-  if (!components_.insert(std::make_pair(_component->fullName(),
+  if (!components_.insert(std::make_pair(_component->fullname(),
                                          _component)).second) {
     fprintf(stderr, "duplicate component name detected: %s\n",
-            _component->fullName().c_str());
+            _component->fullname().c_str());
     assert(false);
   }
 
   // set debug if needed
-  if (toBeDebugged_.count(_component->fullName()) == 1) {
+  if (toBeDebugged_.count(_component->fullname()) == 1) {
     _component->debug = true;
-    u64 res = toBeDebugged_.erase(_component->fullName());
+    u64 res = toBeDebugged_.erase(_component->fullname());
     (void)res;
     assert(res == 1);
   }
@@ -146,13 +146,13 @@ void Simulator::addComponent(Component* _component) {
   }
 }
 
-Component* Simulator::getComponent(const std::string& _fullName) const {
-  return components_.at(_fullName);
+Component* Simulator::getComponent(const std::string& _fullname) const {
+  return components_.at(_fullname);
 }
 
-void Simulator::removeComponent(const std::string& _fullName) {
-  components_.at(_fullName)->executer_ = U32_MAX;
-  u64 res = components_.erase(_fullName);
+void Simulator::removeComponent(const std::string& _fullname) {
+  components_.at(_fullname)->executer_ = U32_MAX;
+  u64 res = components_.erase(_fullname);
   (void)res;
   assert(res == 1);
 }
@@ -161,8 +161,8 @@ u64 Simulator::numComponents() const {
   return components_.size();
 }
 
-void Simulator::addDebugName(const std::string& _fullName) {
-  bool res = toBeDebugged_.insert(_fullName).second;
+void Simulator::addDebugName(const std::string& _fullname) {
+  bool res = toBeDebugged_.insert(_fullname).second;
   (void)res;
   assert(res);
 }
@@ -171,7 +171,7 @@ void Simulator::debugCheck() {
   // ensure that all Components that were marked to be debugged got accounted
   //  for during component construction
   for (auto it = toBeDebugged_.begin(); it != toBeDebugged_.end(); ++it) {
-    fprintf(stderr, "%s is an invalid component name\n", it->c_str());
+    fprintf(stderr, "invalid component name: %s\n", it->c_str());
   }
   assert(toBeDebugged_.size() == 0);
   toBeDebugged_.reserve(0);

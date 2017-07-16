@@ -36,21 +36,22 @@
 
 namespace des {
 
-Clocked::Clocked(const std::string& _name,
-                 const Clocked* _parent)
-    : Clocked(_parent->simulator, _name, _parent, _parent->cyclePeriod_,
-              _parent->cyclePhase_) {}
+Clocked::Clocked(const std::string& _name, const Clocked* _parent)
+    : Component(_name, _parent), cyclePeriod_(_parent->cyclePeriod_),
+      cyclePhase_(_parent->cyclePhase_) {
+  assert(cyclePhase_ < cyclePeriod_);
+}
 
-Clocked::Clocked(const std::string& _name,
-                 const Component* _parent, Tick _cyclePeriod,
-                 Tick _cyclePhase)
-    : Clocked(_parent->simulator, _name, _parent, _cyclePeriod,
-              _cyclePhase) {}
+Clocked::Clocked(const std::string& _name, const Component* _parent,
+                 Tick _cyclePeriod, Tick _cyclePhase)
+    : Component(_name, _parent), cyclePeriod_(_cyclePeriod),
+      cyclePhase_(_cyclePhase) {
+  assert(cyclePhase_ < cyclePeriod_);
+}
 
 Clocked::Clocked(Simulator* _simulator, const std::string& _name,
-                 const Component* _parent, Tick _cyclePeriod,
-                 Tick _cyclePhase)
-    : Component(_simulator, _name, _parent), cyclePeriod_(_cyclePeriod),
+                 Tick _cyclePeriod, Tick _cyclePhase)
+    : Component(_simulator, _name), cyclePeriod_(_cyclePeriod),
       cyclePhase_(_cyclePhase) {
   assert(cyclePhase_ < cyclePeriod_);
 }

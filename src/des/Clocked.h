@@ -43,11 +43,16 @@ class Simulator;
 
 class Clocked : public Component {
  public:
+  // this constructor is for a child of a Clocked to inherit clock attributes
   Clocked(const std::string& _name, const Clocked* _parent);
+
+  // this constructor is for a child of a Component with new clock attributes
   Clocked(const std::string& _name, const Component* _parent,
           Tick _cyclePeriod, Tick _cyclePhase);
+
+  // this constructor is for a top level Clocked
   Clocked(Simulator* _simulator, const std::string& _name,
-          const Component* _parent, Tick _cyclePeriod, Tick _cyclePhase);
+          Tick _cyclePeriod, Tick _cyclePhase);
   virtual ~Clocked();
 
   Tick cyclePeriod() const;

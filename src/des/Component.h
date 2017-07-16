@@ -44,21 +44,27 @@ class Simulator;
 
 class Component {
  public:
-  // this constructor inherits the Simulator from the parent
+  // this constructor is for a top level component
+  Component(Simulator* _simulator, const std::string& _name);
+
+  // this constructor is for a child component
   Component(const std::string& _name, const Component* _parent);
-  // this is the full constructor
-  Component(Simulator* _simulator, const std::string& _name,
-            const Component* _parent);
+
   virtual ~Component();
-  const std::string& baseName() const;
-  std::string fullName() const;
+  const std::string& basename() const;
+  std::string fullname() const;
+  const Component* parent() const;
   u32 executer() const;
 
-  mutable Simulator* simulator;
+  mutable Simulator* simulator;  // mutable to call addEvent
   bool debug;
 
  private:
-  std::string name_;
+  // this the full constructor
+  Component(Simulator* _simulator, const std::string& _name,
+            const Component* _parent);
+
+  std::string basename_;
   const Component* parent_;
   u32 executer_;
 

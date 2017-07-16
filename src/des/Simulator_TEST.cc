@@ -40,10 +40,43 @@
 #include "des/Component.h"
 #include "des/Time.h"
 
+class TestComponent : public des::Component {
+ public:
+  TestComponent(const std::string& _name, const Component* _parent)
+      : des::Component(_name, _parent) {}
+  TestComponent(des::Simulator* _simulator, const std::string& _name)
+      : des::Component(_simulator, _name) {}
+  ~TestComponent() {}
+};
+
+TEST(Simulator, debug) {
+  des::Simulator sim;
+  sim.addDebugName("top");
+  sim.addDebugName("top.right");
+
+  TestComponent tc1(&sim, "top");
+  ASSERT_TRUE(tc1.debug);
+  TestComponent tc2("left", &tc1);
+  ASSERT_FALSE(tc2.debug);
+  TestComponent tc3("right", &tc1);
+  ASSERT_TRUE(tc3.debug);
+
+  sim.debugCheck();
+}
+
+TEST(Simulator, numComponents) {
+  des::Simulator sim;
+
+  TestComponent tc1(&sim, "top");
+  TestComponent tc2("left", &tc1);
+  TestComponent tc3("right", &tc1);
+  ASSERT_EQ(sim.numComponents(), 3u);
+}
+
 class NullComponent : public des::Component {
  public:
   NullComponent(des::Simulator* _simulator, u64 _id)
-      : des::Component(_simulator, std::to_string(_id), nullptr), id_(_id),
+      : des::Component(_simulator, std::to_string(_id)), id_(_id),
         event_(this, static_cast<des::EventHandler>(
             &NullComponent::ignoreEvent), des::Time()) {
     debug = true;

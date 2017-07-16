@@ -39,7 +39,7 @@
 class MyComponent : public des::Component {
  public:
   explicit MyComponent(des::Simulator* _sim)
-      : des::Component(_sim, "component", nullptr) {}
+      : des::Component(_sim, "component") {}
   void ignoreEvent(des::Event*) {}
 };
 
