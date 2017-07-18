@@ -59,7 +59,7 @@ class Simulator {
   // construction and desctruction
   Simulator();
   Simulator(u32 _numExecuters, Mapper* _mapper);
-  ~Simulator();
+  virtual ~Simulator();
 
   // general info
   u32 executers() const;
