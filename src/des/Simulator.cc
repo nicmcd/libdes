@@ -68,7 +68,8 @@ Simulator::Simulator(u32 _numExecuters, Mapper* _mapper)
     : numExecuters_(_numExecuters), mapper_(_mapper) {
   // check inputs
   assert(numExecuters_ > 0);
-  assert(numExecuters_ == 1 || _mapper);
+  assert((numExecuters_ == 1 && !_mapper) ||
+         (numExecuters_ > 1 && _mapper));
 
   // create the event queues
   queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding
@@ -231,28 +232,33 @@ void Simulator::simulate() {
     }
   }
 
-  // set the timeStep
-  state_.timeStep = firstTimeStep;
-
-  // set the nextTimeStep to start simulation
-  state_.nextTimeStep[0].store(firstTimeStep, std::memory_order_release);
-  state_.nextTimeStep[1].store(TIMESTEP_INV, std::memory_order_release);
-
-  // create threads for executers and run
-  std::vector<std::thread> threads;
-  for (u32 id = 0; id < numExecuters_; id++) {
-    threads.push_back(std::thread(&Simulator::executer, this, id));
-  }
-
-  // track the amount of time in simulation
+  // take the current time
   std::chrono::steady_clock::time_point startTime =
       std::chrono::steady_clock::now();
-  stats_.startRealTime = startTime;
-  stats_.lastRealTime = startTime;
 
-  // now wait for all executer threads to complete
-  for (u32 id = 0; id < numExecuters_; id++) {
-    threads.at(id).join();
+  // only attempt to run if needed
+  if (firstTimeStep < TIMESTEP_INV) {
+    // set the timeStep
+    state_.timeStep = firstTimeStep;
+
+    // set the nextTimeStep to start simulation
+    state_.nextTimeStep[0].store(firstTimeStep, std::memory_order_release);
+    state_.nextTimeStep[1].store(TIMESTEP_INV, std::memory_order_release);
+
+    // create threads for executers and run
+    std::vector<std::thread> threads;
+    for (u32 id = 0; id < numExecuters_; id++) {
+      threads.push_back(std::thread(&Simulator::executer, this, id));
+    }
+
+    // track the amount of time in simulation
+    stats_.startRealTime = startTime;
+    stats_.lastRealTime = startTime;
+
+    // now wait for all executer threads to complete
+    for (u32 id = 0; id < numExecuters_; id++) {
+      threads.at(id).join();
+    }
   }
 
   // give a report to the observers
