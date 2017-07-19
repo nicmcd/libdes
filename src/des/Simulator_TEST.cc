@@ -38,7 +38,9 @@
 
 #include "des/Event.h"
 #include "des/Component.h"
+#include "des/Logger.h"
 #include "des/Time.h"
+#include "des/util/RoundRobinMapper.h"
 
 class TestComponent : public des::Component {
  public:
@@ -97,6 +99,26 @@ class NullComponent : public des::Component {
   std::mt19937_64 prng_;
 };
 
+TEST(Simulator, emptysim) {
+  const u64 COMPONENTS = 3;
+  const u64 SIMS = 100;
+
+  des::Simulator* sim = new des::Simulator();
+  std::vector<NullComponent*> components;
+  for (u64 id = 0; id < COMPONENTS; id++) {
+    components.push_back(new NullComponent(sim, id));
+  }
+
+  for (u64 s = 0; s < SIMS; s++) {
+    sim->simulate();
+  }
+
+  for (u64 id = 0; id < COMPONENTS; id++) {
+    delete components.at(id);
+  }
+  delete sim;
+}
+
 TEST(Simulator, multisim) {
   const u64 COMPONENTS = 3;
   const u64 SIMS = 100;
@@ -118,4 +140,93 @@ TEST(Simulator, multisim) {
     delete components.at(id);
   }
   delete sim;
+}
+
+class SubSimulator : public des::Simulator {
+ public:
+  explicit SubSimulator(u32 _numThreads, des::Mapper* _mapper)
+      : des::Simulator(_numThreads, _mapper) {
+    balances.resize(_numThreads, 0);
+  }
+  ~SubSimulator() {}
+  s64& balance() {
+    // return balances.at(0);  // THIS IS AN EXAMPLE OF BREAKING IT!
+    return balances.at(executerId());
+  }
+  std::vector<s64> balances;
+};
+
+class SubComponent : public des::Component {
+ public:
+  SubComponent(des::Simulator* _simulator, const std::string& _name)
+      : des::Component(_simulator, _name), count_(0) {
+    createEvent();
+  }
+  ~SubComponent() {}
+
+  void createEvent() const {
+    Event* event = new Event(self());
+    event->time = simulator->time() + 1;
+    // dlogf("creating event for %s", event->time.toString().c_str());
+    simulator->addEvent(event);
+  }
+
+ private:
+  class Event : public des::Event {
+   public:
+    explicit Event(des::Component* _component)
+        : des::Event(_component, static_cast<des::EventHandler>(
+              &SubComponent::handleEvent)) {}
+  };
+
+  void handleEvent(des::Event* _event) {
+    Event* event = reinterpret_cast<Event*>(_event);
+    delete event;
+
+    count_++;
+    // dlogf("count is %u", count_);
+    if (count_ < 10000) {
+      createEvent();
+    }
+
+    s64& balance = reinterpret_cast<SubSimulator*>(simulator)->balance();
+    balance += count_ % 2 == 0 ? 1 : -1;
+  }
+
+  u32 count_;
+};
+
+TEST(Simulator, inheritRaceFreeThreadLocal) {
+  for (u32 threads = 1; threads < 8; threads++) {
+    des::Logger logger("-");
+    des::Mapper* mapper = nullptr;
+    if (threads > 1) {
+      mapper = new des::RoundRobinMapper();
+    }
+    des::Simulator* sim = new SubSimulator(threads, mapper);
+    sim->setLogger(&logger);
+
+    std::vector<des::Component*> comps;
+    for (u32 cnt = 0; cnt < 10; cnt++) {
+      std::string name = "Comp_" + std::to_string(cnt);
+      sim->addDebugName(name);
+      comps.push_back(new SubComponent(sim, name));
+      ASSERT_TRUE(comps.at(cnt)->debug);
+    }
+
+    sim->debugCheck();
+    sim->simulate();
+
+    for (u32 t = 0; t < threads; t++) {
+      s64 bal = reinterpret_cast<SubSimulator*>(sim)->balances.at(t);
+      ASSERT_EQ(bal, 0);
+    }
+
+    for (u32 cnt = 0; cnt < 10; cnt++) {
+      delete comps.at(cnt);
+    }
+
+    delete sim;
+    delete mapper;
+  }
 }
