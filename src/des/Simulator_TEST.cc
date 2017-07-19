@@ -144,9 +144,9 @@ TEST(Simulator, multisim) {
 
 class SubSimulator : public des::Simulator {
  public:
-  explicit SubSimulator(u32 _numThreads, des::Mapper* _mapper)
-      : des::Simulator(_numThreads, _mapper) {
-    balances.resize(_numThreads, 0);
+  explicit SubSimulator(u32 _numExecuters, des::Mapper* _mapper)
+      : des::Simulator(_numExecuters, _mapper) {
+    balances.resize(_numExecuters, 0);
   }
   ~SubSimulator() {}
   s64& balance() {
@@ -196,10 +196,10 @@ class SubComponent : public des::Component {
 };
 
 TEST(Simulator, inheritRaceFreeThreadLocal) {
-  for (u32 threads = 1; threads < 8; threads++) {
+  for (u32 executers = 1; executers < 8; executers++) {
     des::Logger logger("-");
     des::Mapper* mapper = new des::RoundRobinMapper();
-    des::Simulator* sim = new SubSimulator(threads, mapper);
+    des::Simulator* sim = new SubSimulator(executers, mapper);
     sim->setLogger(&logger);
 
     std::vector<des::Component*> comps;
@@ -213,7 +213,7 @@ TEST(Simulator, inheritRaceFreeThreadLocal) {
     sim->debugCheck();
     sim->simulate();
 
-    for (u32 t = 0; t < threads; t++) {
+    for (u32 t = 0; t < executers; t++) {
       s64 bal = reinterpret_cast<SubSimulator*>(sim)->balances.at(t);
       ASSERT_EQ(bal, 0);
     }
