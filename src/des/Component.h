@@ -55,6 +55,7 @@ class Component {
   std::string fullname() const;
   const Component* parent() const;
   u32 executer() const;
+  Component* self() const;
 
   mutable Simulator* simulator;  // mutable to call addEvent
   bool debug;

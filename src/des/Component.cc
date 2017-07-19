@@ -71,6 +71,10 @@ u32 Component::executer() const {
   return executer_;
 }
 
+Component* Component::self() const {
+  return const_cast<Component*>(this);
+}
+
 Component::Component(Simulator* _simulator, const std::string& _name,
                      const Component* _parent)
     : simulator(_simulator), debug(false), basename_(_name), parent_(_parent),
