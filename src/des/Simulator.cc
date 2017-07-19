@@ -68,8 +68,7 @@ Simulator::Simulator(u32 _numExecuters, Mapper* _mapper)
     : numExecuters_(_numExecuters), mapper_(_mapper) {
   // check inputs
   assert(numExecuters_ > 0);
-  assert((numExecuters_ == 1 && !_mapper) ||
-         (numExecuters_ > 1 && _mapper));
+  assert(numExecuters_ == 1 || _mapper);
 
   // create the event queues
   queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding

@@ -159,16 +159,14 @@ class SubSimulator : public des::Simulator {
 class SubComponent : public des::Component {
  public:
   SubComponent(des::Simulator* _simulator, const std::string& _name)
-      : des::Component(_simulator, _name), count_(0) {
-    createEvent();
+      : des::Component(_simulator, _name), event_(this), count_(0) {
+    nextEvent();
   }
   ~SubComponent() {}
 
-  void createEvent() const {
-    Event* event = new Event(self());
-    event->time = simulator->time() + 1;
-    // dlogf("creating event for %s", event->time.toString().c_str());
-    simulator->addEvent(event);
+  void nextEvent() const {
+    event_.time = simulator->time() + 1;
+    simulator->addEvent(&event_);
   }
 
  private:
@@ -181,28 +179,26 @@ class SubComponent : public des::Component {
 
   void handleEvent(des::Event* _event) {
     Event* event = reinterpret_cast<Event*>(_event);
-    delete event;
+    (void)event;
 
     count_++;
     // dlogf("count is %u", count_);
-    if (count_ < 10000) {
-      createEvent();
+    if (count_ < 1000) {
+      nextEvent();
     }
 
     s64& balance = reinterpret_cast<SubSimulator*>(simulator)->balance();
     balance += count_ % 2 == 0 ? 1 : -1;
   }
 
+  mutable Event event_;
   u32 count_;
 };
 
 TEST(Simulator, inheritRaceFreeThreadLocal) {
   for (u32 threads = 1; threads < 8; threads++) {
     des::Logger logger("-");
-    des::Mapper* mapper = nullptr;
-    if (threads > 1) {
-      mapper = new des::RoundRobinMapper();
-    }
+    des::Mapper* mapper = new des::RoundRobinMapper();
     des::Simulator* sim = new SubSimulator(threads, mapper);
     sim->setLogger(&logger);
 
