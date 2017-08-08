@@ -180,9 +180,11 @@ void Simulator::debugCheck() {
 void Simulator::addEvent(Event* _event) {
   TimeStep eventTimeStep = _event->time.raw();
 
-  // verify time
-  TimeStep timeStep = state_.timeStep;
-  assert(eventTimeStep > timeStep);
+  // verify event time is in the future
+  if (state_.running.load(std::memory_order_acquire)) {
+    TimeStep timeStep = state_.timeStep;
+    assert(eventTimeStep > timeStep);
+  }
 
   // push the event into the queue
   u32 id = _event->component->executer_;

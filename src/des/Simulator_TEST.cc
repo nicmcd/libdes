@@ -142,6 +142,46 @@ TEST(Simulator, multisim) {
   delete sim;
 }
 
+class OneAtZero : public des::Component {
+ public:
+  OneAtZero(des::Simulator* _simulator, u64 _id)
+      : des::Component(_simulator, std::to_string(_id)), id_(_id),
+        event_(this, static_cast<des::EventHandler>(
+            &OneAtZero::ignoreEvent), des::Time()) {
+    debug = true;
+    event_.time = 0;
+    simulator->addEvent(&event_);
+  }
+
+  void ignoreEvent(des::Event* _event) {
+    (void)_event;
+  }
+
+ private:
+  u64 id_;
+  des::Event event_;
+};
+
+TEST(Simulator, execTime0) {
+  const u64 COMPONENTS = 3;
+  const u64 SIMS = 100;
+
+  des::Simulator* sim = new des::Simulator();
+  std::vector<OneAtZero*> components;
+  for (u64 id = 0; id < COMPONENTS; id++) {
+    components.push_back(new OneAtZero(sim, id));
+  }
+
+  for (u64 s = 0; s < SIMS; s++) {
+    sim->simulate();
+  }
+
+  for (u64 id = 0; id < COMPONENTS; id++) {
+    delete components.at(id);
+  }
+  delete sim;
+}
+
 class SubSimulator : public des::Simulator {
  public:
   explicit SubSimulator(u32 _numExecuters, des::Mapper* _mapper)
