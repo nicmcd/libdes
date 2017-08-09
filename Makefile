@@ -1,36 +1,37 @@
 #--------------------- Basic Settings -----------------------------------------#
-PROGRAM_NAME  := des
-BINARY_BASE   := bin
-BUILD_BASE    := bld
-INCLUDE_BASE  := inc
-SOURCE_BASE   := src
+PROGRAM_NAME   := des
+BINARY_BASE    := bin
+BUILD_BASE     := bld
+INCLUDE_BASE   := inc
+SOURCE_BASE    := src
 
 #--------------------- External Libraries -------------------------------------#
-HEADER_DIRS   := \
+HEADER_DIRS    := \
 	../libprim/inc \
 	../librnd/inc
-STATIC_LIBS   := \
+STATIC_LIBS    := \
 	../libprim/bld/libprim.a \
 	../librnd/bld/librnd.a
 
 #--------------------- Cpp Lint -----------------------------------------------#
-LINT          := $(HOME)/.makeccpp/cpplint/cpplint.py
-LINT_FLAGS    :=
+LINT           := $(HOME)/.makeccpp/cpplint/cpplint.py
+LINT_FLAGS     :=
 
 #--------------------- Unit Tests ---------------------------------------------#
-TEST_SUFFIX   := _TEST
-GTEST_BASE    := $(HOME)/.makeccpp/gtest
+TEST_SUFFIX    := _TEST
+GTEST_BASE     := $(HOME)/.makeccpp/gtest
+GTEST_PARALLEL := $(HOME)/.makeccpp/gtest-parallel
 
 #--------------------- Compilation and Linking --------------------------------#
-CXX           := g++
-AR            := gcc-ar
-SRC_EXTS      := .cc
-HDR_EXTS      := .h .tcc
-CXX_FLAGS     := -std=c++11 -Wall -Wextra -pedantic -Wfatal-errors 
-CXX_FLAGS     += -march=native -g -O3 -flto
-CXX_FLAGS     += -pthread
-#CXX_FLAGS     += -DNDEBUGLOG
-LINK_FLAGS    := -lz -lpthread -Wl,--no-as-needed
+CXX            := g++
+AR             := gcc-ar
+SRC_EXTS       := .cc
+HDR_EXTS       := .h .tcc
+CXX_FLAGS      := -std=c++11 -Wall -Wextra -pedantic -Wfatal-errors 
+CXX_FLAGS      += -march=native -g -O3 -flto
+CXX_FLAGS      += -pthread
+#CXX_FLAGS      += -DNDEBUGLOG
+LINK_FLAGS     := -lz -lpthread -Wl,--no-as-needed
 
 #--------------------- Auto Makefile ------------------------------------------#
 include $(HOME)/.makeccpp/auto_lib.mk
