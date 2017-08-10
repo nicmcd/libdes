@@ -172,6 +172,23 @@ class Simulator {
   // this is the function that gets called per executer thread
   void executer(u32 _id);
 
+  // get the initial time step to be simulated by the executers
+  TimeStep initialTimeStep();
+
+  // this initializes the barrier
+  // Args:
+  //  _firstTimeStep - the first time step to be simulated
+  void barrierInit(TimeStep _firstTimeStep);
+
+  // this is the barrier function each executer thread calls on each time step
+  // Args:
+  //  _id - the ID of this executer
+  //  _minTimeStep - minimum timestep desired by this executer
+  //  _executed - number of events executed by this executer
+  // Return:
+  //  the next TimeStep to be executed
+  TimeStep barrier(u32 _id, TimeStep _minTimeStep, u64 _executed);
+
   // info
   const u32 numExecuters_;
   State state_;
