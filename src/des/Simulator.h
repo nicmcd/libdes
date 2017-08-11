@@ -58,14 +58,18 @@ class Simulator {
  public:
   // construction and desctruction
   Simulator();
-  Simulator(u32 _numExecuters, Mapper* _mapper);
+  explicit Simulator(u32 _numExecuters);
   virtual ~Simulator();
 
   // general info
   u32 executers() const;
   Time time() const;
 
-  // logger for global access
+  // component->executer mapping
+  void setMapper(Mapper* _mapper);
+  Mapper* getMapper() const;
+
+  // logging
   void setLogger(Logger* _logger);
   Logger* getLogger() const;
 

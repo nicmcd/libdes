@@ -185,7 +185,8 @@ TEST(Simulator, execTime0) {
 class SubSimulator : public des::Simulator {
  public:
   explicit SubSimulator(u32 _numExecuters, des::Mapper* _mapper)
-      : des::Simulator(_numExecuters, _mapper) {
+      : des::Simulator(_numExecuters) {
+    setMapper(_mapper);
     balances.resize(_numExecuters, 0);
   }
   ~SubSimulator() {}

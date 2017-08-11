@@ -57,7 +57,8 @@ TEST(Mapper, simulatorAssignment) {
   for (u32 numExecuters : std::vector<u32>({1, 2, 10, 100})) {
     // create simulator
     TestMapper* mapper = new TestMapper();
-    des::Simulator* sim = new des::Simulator(numExecuters, mapper);
+    des::Simulator* sim = new des::Simulator(numExecuters);
+    sim->setMapper(mapper);
 
     // create components
     std::vector<des::Component*> comps;

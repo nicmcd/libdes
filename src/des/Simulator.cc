@@ -70,13 +70,12 @@ static thread_local ExecuterState exeState;
 
 
 Simulator::Simulator()
-    : Simulator(1, nullptr) {}
+    : Simulator(1) {}
 
-Simulator::Simulator(u32 _numExecuters, Mapper* _mapper)
-    : numExecuters_(_numExecuters), initialized_(false), mapper_(_mapper) {
+Simulator::Simulator(u32 _numExecuters)
+    : numExecuters_(_numExecuters), initialized_(false), mapper_(nullptr) {
   // check inputs
   assert(numExecuters_ > 0);
-  assert(numExecuters_ == 1 || _mapper);
 
   // create the event queues
   queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding
@@ -106,6 +105,14 @@ u32 Simulator::executers() const {
 
 Time Simulator::time() const {
   return Time::create(state_.timeStep);
+}
+
+void Simulator::setMapper(Mapper* _mapper) {
+  mapper_ = _mapper;
+}
+
+Mapper* Simulator::getMapper() const {
+  return mapper_;
 }
 
 void Simulator::setLogger(Logger* _logger) {
@@ -151,6 +158,7 @@ void Simulator::addComponent(Component* _component) {
   if (numExecuters_ == 1) {
     _component->executer_ = 0;
   } else {
+    assert(mapper_);
     _component->executer_ = mapper_->map(numExecuters_, _component);
     assert(_component->executer_ < numExecuters_);
   }
