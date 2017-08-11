@@ -51,6 +51,11 @@ class Component {
   Component(const std::string& _name, const Component* _parent);
 
   virtual ~Component();
+
+  // this is called after ALL components have been created and BEFORE
+  //  simulation has begun
+  virtual void initialize();
+
   const std::string& basename() const;
   std::string fullname() const;
   const Component* parent() const;

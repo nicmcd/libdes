@@ -37,6 +37,7 @@
 #include <algorithm>
 #include <ratio>
 #include <thread>
+#include <utility>
 
 #include "des/Event.h"
 #include "des/Component.h"
@@ -72,7 +73,7 @@ Simulator::Simulator()
     : Simulator(1, nullptr) {}
 
 Simulator::Simulator(u32 _numExecuters, Mapper* _mapper)
-    : numExecuters_(_numExecuters), mapper_(_mapper) {
+    : numExecuters_(_numExecuters), initialized_(false), mapper_(_mapper) {
   // check inputs
   assert(numExecuters_ > 0);
   assert(numExecuters_ == 1 || _mapper);
@@ -128,6 +129,8 @@ void Simulator::setObservingPower(u64 _expPow2Events) {
 }
 
 void Simulator::addComponent(Component* _component) {
+  assert(!initialized_);
+
   // duplicate name detection
   if (!components_.insert(std::make_pair(_component->fullname(),
                                          _component)).second) {
@@ -209,7 +212,17 @@ void Simulator::addEvent(Event* _event) {
   exeState.minTimeStep = std::min(exeState.minTimeStep, eventTimeStep);
 }
 
+void Simulator::initialize() {
+  assert(!initialized_);
+  for (std::pair<std::string, Component*> comp : components_) {
+    comp.second->initialize();
+  }
+  initialized_ = true;
+}
+
 void Simulator::simulate() {
+  assert(initialized_);
+
   // set running to true
   assert(!state_.running.load(std::memory_order_acquire));
   state_.running.store(true, std::memory_order_release);

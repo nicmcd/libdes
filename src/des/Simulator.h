@@ -84,6 +84,7 @@ class Simulator {
 
   // events and event handling
   void addEvent(Event* _event);
+  void initialize();
   void simulate();
 
  protected:
@@ -208,6 +209,7 @@ class Simulator {
   // components and debugging names
   std::unordered_map<std::string, Component*> components_;
   std::unordered_set<std::string> toBeDebugged_;
+  bool initialized_;
 
   // component to executer mapping
   Mapper* mapper_;

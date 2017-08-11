@@ -48,6 +48,10 @@ Component::~Component() {
   simulator->removeComponent(fullname());
 }
 
+void Component::initialize() {
+  // this function can be overridden if a component needs to be initialized
+}
+
 const std::string& Component::basename() const {
   return basename_;
 }
