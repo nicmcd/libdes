@@ -98,6 +98,7 @@ TEST(Clocked, futureCycle) {
   ASSERT_EQ(c.cyclePeriod(), 1500u);
   ASSERT_EQ(c.cyclePhase(), 500u);
 
+  sim.initialize();
   for (u64 cnt = 0; cnt < SIMS; cnt++) {
     des::Tick now = sim.time().tick();
     for (u64 cyc = 1; cyc < 5; cyc++) {

@@ -109,6 +109,7 @@ TEST(Simulator, emptysim) {
     components.push_back(new NullComponent(sim, id));
   }
 
+  sim->initialize();
   for (u64 s = 0; s < SIMS; s++) {
     sim->simulate();
   }
@@ -129,6 +130,7 @@ TEST(Simulator, multisim) {
     components.push_back(new NullComponent(sim, id));
   }
 
+  sim->initialize();
   for (u64 s = 0; s < SIMS; s++) {
     for (u64 id = 0; id < COMPONENTS; id++) {
       components.at(id)->nextEvent();
@@ -172,6 +174,7 @@ TEST(Simulator, execTime0) {
     components.push_back(new OneAtZero(sim, id));
   }
 
+  sim->initialize();
   for (u64 s = 0; s < SIMS; s++) {
     sim->simulate();
   }
@@ -252,6 +255,7 @@ TEST(Simulator, inheritRaceFreeThreadLocal) {
     }
 
     sim->debugCheck();
+    sim->initialize();
     sim->simulate();
 
     for (u32 t = 0; t < executers; t++) {
