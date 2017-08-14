@@ -59,8 +59,6 @@ class Component {
   const std::string& basename() const;
   std::string fullname() const;
   const Component* parent() const;
-  u32 executer() const;
-  Component* self() const;
 
   mutable Simulator* simulator;  // mutable to call addEvent
   bool debug;
@@ -72,9 +70,6 @@ class Component {
 
   std::string basename_;
   const Component* parent_;
-  u32 executer_;
-
-  friend class Simulator;
 };
 
 #ifndef NDEBUGLOG

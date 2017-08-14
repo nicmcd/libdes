@@ -28,43 +28,34 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_CLOCKED_H_
-#define DES_CLOCKED_H_
+#include "des/ActiveComponent.h"
 
-#include <prim/prim.h>
+#include <cassert>
 
-#include <string>
-
-#include "des/Component.h"
+#include "des/Simulator.h"
 
 namespace des {
 
-class Simulator;
+ActiveComponent::ActiveComponent(
+    Simulator* _simulator, const std::string& _name)
+    : Component(_simulator, _name), executer_(U32_MAX) {
+  simulator->mapComponent(this);
+}
 
-class Clocked : public Component {
- public:
-  // this constructor is for a child of a Clocked to inherit clock attributes
-  Clocked(const std::string& _name, const Clocked* _parent);
+ActiveComponent::ActiveComponent(const std::string& _name,
+                                 const Component* _parent)
+    : Component(_name, _parent), executer_(U32_MAX) {
+  simulator->mapComponent(this);
+}
 
-  // this constructor is for a child of a Component with new clock attributes
-  Clocked(const std::string& _name, const Component* _parent,
-          Tick _cyclePeriod, Tick _cyclePhase);
+ActiveComponent::~ActiveComponent() {}
 
-  // this constructor is for a top level Clocked
-  Clocked(Simulator* _simulator, const std::string& _name,
-          Tick _cyclePeriod, Tick _cyclePhase);
-  virtual ~Clocked();
+u32 ActiveComponent::executer() const {
+  return executer_;
+}
 
-  Tick cyclePeriod() const;
-  Tick cyclePhase() const;
-  u64 cycle() const;
-  Tick futureCycle(u32 _cycles) const;
-
- private:
-  Tick cyclePeriod_;
-  Tick cyclePhase_;
-};
+ActiveComponent* ActiveComponent::self() const {
+  return const_cast<ActiveComponent*>(this);
+}
 
 }  // namespace des
-
-#endif  // DES_CLOCKED_H_

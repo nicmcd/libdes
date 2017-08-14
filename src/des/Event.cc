@@ -32,7 +32,7 @@
 
 #include <prim/prim.h>
 
-#include "des/Component.h"
+#include "des/ActiveComponent.h"
 #include "des/Time.h"
 
 namespace des {
@@ -40,10 +40,10 @@ namespace des {
 Event::Event()
     : component(nullptr), handler(nullptr), time(), next(nullptr) {}
 
-Event::Event(Component* _component, EventHandler _handler)
+Event::Event(ActiveComponent* _component, EventHandler _handler)
     : component(_component), handler(_handler), time(), next(nullptr) {}
 
-Event::Event(Component* _component, EventHandler _handler, Time _time)
+Event::Event(ActiveComponent* _component, EventHandler _handler, Time _time)
     : component(_component), handler(_handler), time(_time), next(nullptr) {}
 
 Event::~Event() {}

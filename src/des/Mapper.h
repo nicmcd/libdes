@@ -35,14 +35,14 @@
 
 namespace des {
 
-class Component;
+class ActiveComponent;
 
 class Mapper {
  public:
   Mapper();
   virtual ~Mapper();
 
-  virtual u32 map(u32 _numExecuters, const Component* _component) = 0;
+  virtual u32 map(u32 _numExecuters, const ActiveComponent* _component) = 0;
 };
 
 }  // namespace des

@@ -43,7 +43,7 @@ class RoundRobinMapper : public Mapper {
   RoundRobinMapper();
   ~RoundRobinMapper();
 
-  u32 map(u32 _numExecuters, const Component* _component) override;
+  u32 map(u32 _numExecuters, const ActiveComponent* _component) override;
 
  private:
   u32 next_;

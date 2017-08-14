@@ -39,6 +39,7 @@
 #include <thread>
 #include <utility>
 
+#include "des/ActiveComponent.h"
 #include "des/Event.h"
 #include "des/Component.h"
 #include "des/Mapper.h"
@@ -48,6 +49,9 @@ namespace des {
 
 // these variables are read/write variables that are thread local
 struct alignas(CACHELINE_SIZE) ExecuterState {
+ public:
+  ExecuterState() : id(U32_MAX) {}
+
   // initial padding isn't needed for thread_local variables :)
 
   // this is the executer id using for executer-level multiplexing
@@ -153,7 +157,9 @@ void Simulator::addComponent(Component* _component) {
     (void)res;
     assert(res == 1);
   }
+}
 
+void Simulator::mapComponent(ActiveComponent* _component) {
   // executer mapping
   if (numExecuters_ == 1) {
     _component->executer_ = 0;
@@ -169,7 +175,6 @@ Component* Simulator::getComponent(const std::string& _fullname) const {
 }
 
 void Simulator::removeComponent(const std::string& _fullname) {
-  components_.at(_fullname)->executer_ = U32_MAX;
   u64 res = components_.erase(_fullname);
   (void)res;
   assert(res == 1);
@@ -193,6 +198,49 @@ void Simulator::debugCheck() {
   }
   assert(toBeDebugged_.size() == 0);
   toBeDebugged_.reserve(0);
+}
+
+u32 Simulator::addClock(Tick _period, Tick _phase) {
+  assert(_period > 0);
+  u32 clockId = clocks_.size();
+  clocks_.push_back(std::make_pair(_period, _phase));
+  return clockId;
+}
+
+Tick Simulator::clockPeriod(u32 _clockId) const {
+  return clocks_.at(_clockId).first;
+}
+
+Tick Simulator::clockPhase(u32 _clockId) const {
+  return clocks_.at(_clockId).second;
+}
+
+u64 Simulator::cycle(u32 _clockId) const {
+  const std::pair<Tick, Tick>& clock = clocks_.at(_clockId);
+  return (time().tick() + clock.second) / clock.first;
+}
+
+u64 Simulator::cycles(u32 _clockId, Time _time) const {
+  return _time.tick() / clockPeriod(_clockId);
+}
+
+Time Simulator::futureCycle(u32 _clockId, u32 _cycles) const {
+  return futureCycle(_clockId, _cycles, 0);
+}
+
+Time Simulator::futureCycle(u32 _clockId, u32 _cycles, Epsilon _epsilon) const {
+  const std::pair<Tick, Tick>& clock = clocks_.at(_clockId);
+  assert(_cycles > 0);
+  Tick tick = time().tick();
+  Tick rem = tick % clock.first;
+  if (rem != clock.second) {
+    tick += (clock.second - rem);
+    if (rem > clock.second) {
+      tick += clock.first;
+    }
+    _cycles--;
+  }
+  return Time(tick + (clock.first * _cycles), _epsilon);
 }
 
 void Simulator::addEvent(Event* _event) {
@@ -365,7 +413,7 @@ void Simulator::executer(u32 _id) {
       }
 
       // execute the event
-      Component* component = event->component;
+      ActiveComponent* component = event->component;
       EventHandler handler = event->handler;
       (component->*handler)(event);
       executed++;

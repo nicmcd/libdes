@@ -31,7 +31,7 @@
 #ifndef DES_DES_H_
 #define DES_DES_H_
 
-#include "des/Clocked.h"
+#include "des/ActiveComponent.h"
 #include "des/Component.h"
 #include "des/Event.h"
 #include "des/Logger.h"

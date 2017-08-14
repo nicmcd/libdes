@@ -43,7 +43,7 @@ class RandomMapper : public Mapper {
   explicit RandomMapper(rnd::Random* _random);
   ~RandomMapper();
 
-  u32 map(u32 _numExecuters, const Component* _component) override;
+  u32 map(u32 _numExecuters, const ActiveComponent* _component) override;
 
  private:
   rnd::Random* random_;

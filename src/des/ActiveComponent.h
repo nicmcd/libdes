@@ -28,60 +28,38 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/Clocked.h"
+#ifndef DES_ACTIVECOMPONENT_H_
+#define DES_ACTIVECOMPONENT_H_
 
-#include <cassert>
+#include <prim/prim.h>
 
-#include "des/Simulator.h"
+#include <string>
+
+#include "des/Component.h"
 
 namespace des {
 
-Clocked::Clocked(const std::string& _name, const Clocked* _parent)
-    : Component(_name, _parent), cyclePeriod_(_parent->cyclePeriod_),
-      cyclePhase_(_parent->cyclePhase_) {
-  assert(cyclePhase_ < cyclePeriod_);
-}
+class Simulator;
 
-Clocked::Clocked(const std::string& _name, const Component* _parent,
-                 Tick _cyclePeriod, Tick _cyclePhase)
-    : Component(_name, _parent), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
-}
+class ActiveComponent : public Component {
+ public:
+  // this constructor is for a top level component
+  ActiveComponent(Simulator* _simulator, const std::string& _name);
 
-Clocked::Clocked(Simulator* _simulator, const std::string& _name,
-                 Tick _cyclePeriod, Tick _cyclePhase)
-    : Component(_simulator, _name), cyclePeriod_(_cyclePeriod),
-      cyclePhase_(_cyclePhase) {
-  assert(cyclePhase_ < cyclePeriod_);
-}
+  // this constructor is for a child component
+  ActiveComponent(const std::string& _name, const Component* _parent);
 
-Clocked::~Clocked() {}
+  virtual ~ActiveComponent();
 
-Tick Clocked::cyclePeriod() const {
-  return cyclePeriod_;
-}
+  u32 executer() const;
+  ActiveComponent* self() const;
 
-Tick Clocked::cyclePhase() const {
-  return cyclePhase_;
-}
+ private:
+  u32 executer_;
 
-u64 Clocked::cycle() const {
-  return (simulator->time().tick() + cyclePhase_) / cyclePeriod_;
-}
-
-Tick Clocked::futureCycle(u32 _cycles) const {
-  assert(_cycles > 0);
-  Tick tick = simulator->time().tick();
-  Tick rem = tick % cyclePeriod_;
-  if (rem != cyclePhase_) {
-    tick += (cyclePhase_ - rem);
-    if (rem > cyclePhase_) {
-      tick += cyclePeriod_;
-    }
-    _cycles--;
-  }
-  return tick + (cyclePeriod_ * _cycles);
-}
+  friend class Simulator;
+};
 
 }  // namespace des
+
+#endif  // DES_ACTIVECOMPONENT_H_

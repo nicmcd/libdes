@@ -34,6 +34,7 @@
 
 #include "des/des.h"
 
+namespace {
 class TestComponent : public des::Component {
  public:
   TestComponent(const std::string& _name, const Component* _parent)
@@ -42,6 +43,7 @@ class TestComponent : public des::Component {
       : des::Component(_simulator, _name) {}
   ~TestComponent() {}
 };
+}  // namespace
 
 TEST(Component, construct) {
   des::Simulator sim;

@@ -41,20 +41,21 @@ ItemEvent<T>::ItemEvent(T _item)
     : Event(), item(_item) {}
 
 template <typename T>
-ItemEvent<T>::ItemEvent(Component* _component, EventHandler _handler)
+ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler)
     : Event(_component, _handler) {}
 
 template <typename T>
-ItemEvent<T>::ItemEvent(Component* _component, EventHandler _handler, T _item)
+ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
+                        T _item)
     : Event(_component, _handler), item(_item) {}
 
 template <typename T>
-ItemEvent<T>::ItemEvent(Component* _component, EventHandler _handler,
+ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
                         Time _time)
     : Event(_component, _handler, _time) {}
 
 template <typename T>
-ItemEvent<T>::ItemEvent(Component* _component, EventHandler _handler,
+ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
                         Time _time, T _item)
     : Event(_component, _handler, _time), item(_item) {}
 

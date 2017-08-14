@@ -40,6 +40,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include "des/cacheline_util.h"
@@ -49,6 +50,7 @@
 
 namespace des {
 
+class ActiveComponent;
 class Mapper;
 class Logger;
 class Component;
@@ -80,11 +82,21 @@ class Simulator {
 
   // components and debugging
   void addComponent(Component* _component);
+  void mapComponent(ActiveComponent* _component);
   Component* getComponent(const std::string& _fullname) const;
   void removeComponent(const std::string& _fullname);
   u64 numComponents() const;
   void addDebugName(const std::string& _fullname);
   void debugCheck();
+
+  // clocks
+  u32 addClock(Tick _period, Tick _phase);
+  Tick clockPeriod(u32 _clockId) const;
+  Tick clockPhase(u32 _clockId) const;
+  u64 cycle(u32 _clockId) const;
+  u64 cycles(u32 _clockId, Time _time) const;
+  Time futureCycle(u32 _clockId, u32 _cycles) const;
+  Time futureCycle(u32 _clockId, u32 _cycles, Epsilon _epsilon) const;
 
   // events and event handling
   void addEvent(Event* _event);
@@ -217,6 +229,9 @@ class Simulator {
 
   // component to executer mapping
   Mapper* mapper_;
+
+  // clocks
+  std::vector<std::pair<Tick, Tick> > clocks_;
 };
 
 }  // namespace des

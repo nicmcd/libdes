@@ -30,6 +30,8 @@
  */
 #include "des/util/RoundRobinMapper.h"
 
+#include "des/ActiveComponent.h"
+
 namespace des {
 
 RoundRobinMapper::RoundRobinMapper()
@@ -37,7 +39,8 @@ RoundRobinMapper::RoundRobinMapper()
 
 RoundRobinMapper::~RoundRobinMapper() {}
 
-u32 RoundRobinMapper::map(u32 _numExecuters, const Component* _component) {
+u32 RoundRobinMapper::map(u32 _numExecuters,
+                          const ActiveComponent* _component) {
   (void)_component;  // unused
   u32 exe = next_;
   next_ = (next_ + 1) % _numExecuters;

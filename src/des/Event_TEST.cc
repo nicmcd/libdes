@@ -32,16 +32,19 @@
 
 #include <gtest/gtest.h>
 
+#include "des/ActiveComponent.h"
 #include "des/Component.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
 
-class MyComponent : public des::Component {
+namespace {
+class MyComponent : public des::ActiveComponent {
  public:
   explicit MyComponent(des::Simulator* _sim)
-      : des::Component(_sim, "component") {}
+      : des::ActiveComponent(_sim, "component") {}
   void ignoreEvent(des::Event*) {}
 };
+}  // namespace
 
 TEST(Event, constructor1) {
   des::Simulator sim;

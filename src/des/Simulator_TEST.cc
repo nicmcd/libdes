@@ -36,12 +36,14 @@
 #include <random>
 #include <vector>
 
-#include "des/Event.h"
+#include "des/ActiveComponent.h"
 #include "des/Component.h"
+#include "des/Event.h"
 #include "des/Logger.h"
 #include "des/Time.h"
 #include "des/util/RoundRobinMapper.h"
 
+namespace {
 class TestComponent : public des::Component {
  public:
   TestComponent(const std::string& _name, const Component* _parent)
@@ -50,6 +52,7 @@ class TestComponent : public des::Component {
       : des::Component(_simulator, _name) {}
   ~TestComponent() {}
 };
+}  // namespace
 
 TEST(Simulator, debug) {
   des::Simulator sim;
@@ -75,10 +78,11 @@ TEST(Simulator, numComponents) {
   ASSERT_EQ(sim.numComponents(), 3u);
 }
 
-class NullComponent : public des::Component {
+namespace {
+class NullComponent : public des::ActiveComponent {
  public:
   NullComponent(des::Simulator* _simulator, u64 _id)
-      : des::Component(_simulator, std::to_string(_id)), id_(_id),
+      : des::ActiveComponent(_simulator, std::to_string(_id)), id_(_id),
         event_(this, static_cast<des::EventHandler>(
             &NullComponent::ignoreEvent), des::Time()) {
     debug = true;
@@ -98,6 +102,7 @@ class NullComponent : public des::Component {
   des::Event event_;
   std::mt19937_64 prng_;
 };
+}  // namespace
 
 TEST(Simulator, emptysim) {
   const u64 COMPONENTS = 3;
@@ -144,10 +149,11 @@ TEST(Simulator, multisim) {
   delete sim;
 }
 
-class OneAtZero : public des::Component {
+namespace {
+class OneAtZero : public des::ActiveComponent {
  public:
   OneAtZero(des::Simulator* _simulator, u64 _id)
-      : des::Component(_simulator, std::to_string(_id)), id_(_id),
+      : des::ActiveComponent(_simulator, std::to_string(_id)), id_(_id),
         event_(this, static_cast<des::EventHandler>(
             &OneAtZero::ignoreEvent), des::Time()) {
     debug = true;
@@ -163,6 +169,7 @@ class OneAtZero : public des::Component {
   u64 id_;
   des::Event event_;
 };
+}  // namespace
 
 TEST(Simulator, execTime0) {
   const u64 COMPONENTS = 3;
@@ -185,6 +192,7 @@ TEST(Simulator, execTime0) {
   delete sim;
 }
 
+namespace {
 class SubSimulator : public des::Simulator {
  public:
   explicit SubSimulator(u32 _numExecuters, des::Mapper* _mapper)
@@ -200,10 +208,10 @@ class SubSimulator : public des::Simulator {
   std::vector<s64> balances;
 };
 
-class SubComponent : public des::Component {
+class SubComponent : public des::ActiveComponent {
  public:
   SubComponent(des::Simulator* _simulator, const std::string& _name)
-      : des::Component(_simulator, _name), event_(this), count_(0) {
+      : des::ActiveComponent(_simulator, _name), event_(this), count_(0) {
     nextEvent();
   }
   ~SubComponent() {}
@@ -216,7 +224,7 @@ class SubComponent : public des::Component {
  private:
   class Event : public des::Event {
    public:
-    explicit Event(des::Component* _component)
+    explicit Event(des::ActiveComponent* _component)
         : des::Event(_component, static_cast<des::EventHandler>(
               &SubComponent::handleEvent)) {}
   };
@@ -238,6 +246,7 @@ class SubComponent : public des::Component {
   mutable Event event_;
   u32 count_;
 };
+}  // namespace
 
 TEST(Simulator, inheritRaceFreeThreadLocal) {
   for (u32 executers = 1; executers < 8; executers++) {
@@ -269,5 +278,85 @@ TEST(Simulator, inheritRaceFreeThreadLocal) {
 
     delete sim;
     delete mapper;
+  }
+}
+
+namespace {
+class SetTimeComponent : public des::ActiveComponent {
+ public:
+  explicit SetTimeComponent(des::Simulator* _simulator)
+      : des::ActiveComponent(_simulator, "settime"),
+        event_(this, static_cast<des::EventHandler>(
+            &SetTimeComponent::ignoreEvent)) {
+    debug = true;
+  }
+
+  void setEvent(des::Time _time) {
+    event_.time = _time;
+    simulator->addEvent(&event_);
+  }
+
+  void ignoreEvent(des::Event* _event) {
+    (void)_event;
+  }
+
+ private:
+    des::Event event_;
+};
+}  // namespace
+
+u64 slowFutureCycle(des::Tick _now, des::Tick _period, des::Tick _phase,
+                    u64 _cycles) {
+  des::Tick tick = _now + 1;
+  while (tick % _period != _phase) {
+    tick++;
+  }
+  tick += (_period * (_cycles - 1));
+  return tick;
+}
+
+TEST(Simulator, futureCycle) {
+  const u64 SIMS = 100;
+
+  des::Simulator sim;
+  u32 clock1 = sim.addClock(1000, 0);
+  u32 clock2 = sim.addClock(1500, 500);
+  std::vector<u32> clocks({clock1, clock2});
+
+  SetTimeComponent t(&sim);
+
+  ASSERT_EQ(sim.clockPeriod(clock1), 1000u);
+  ASSERT_EQ(sim.clockPhase(clock1), 0u);
+
+  ASSERT_EQ(sim.clockPeriod(clock2), 1500u);
+  ASSERT_EQ(sim.clockPhase(clock2), 500u);
+
+  sim.initialize();
+  for (u64 cnt = 0; cnt < SIMS; cnt++) {
+    des::Tick now = sim.time().tick();
+    for (u64 cyc = 1; cyc < 5; cyc++) {
+      for (u32 clock : clocks) {
+        for (des::Epsilon e = 0; e < 3; e++) {
+          des::Tick period = sim.clockPeriod(clock);
+          des::Tick phase = sim.clockPhase(clock);
+          u64 cycle = sim.cycle(clock);
+          ASSERT_EQ(cycle, (now + phase) / period);
+          des::Time time;
+          if (e == 0) {
+            time = sim.futureCycle(clock, cyc);
+          } else {
+            time = sim.futureCycle(clock, cyc, e);
+          }
+          ASSERT_EQ(time.epsilon(), e);
+          des::Tick cmfc = time.tick();
+          des::Tick sfc = slowFutureCycle(now, period, phase, cyc);
+          // printf("period=%lu phase=%lu now=%lu cycles=%lu, cmfc=%lu\n",
+          //        period, phase, now, cyc, cmfc);
+          ASSERT_EQ(cmfc, sfc);
+        }
+      }
+    }
+    t.setEvent(des::Time(now + 1, 12));
+    sim.simulate();
   }
 }

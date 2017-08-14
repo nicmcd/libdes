@@ -33,25 +33,28 @@
 #include <gtest/gtest.h>
 #include <prim/prim.h>
 
-#include <des/des.h>
+#include "des/ActiveComponent.h"
+#include "des/Simulator.h"
 
+namespace {
 class TestMapper : public des::Mapper {
  public:
   TestMapper() : count(0) {}
   ~TestMapper() {}
-  u32 map(u32 _numExecuters, const des::Component* _component) override {
+  u32 map(u32 _numExecuters, const des::ActiveComponent* _component) override {
     count++;
     return std::stoul(_component->basename()) % _numExecuters;
   }
   u32 count;
 };
 
-class TestComponent : public des::Component {
+class TestComponent : public des::ActiveComponent {
  public:
   TestComponent(des::Simulator* _simulator, const std::string& _name)
-      : des::Component(_simulator, _name) {}
+      : des::ActiveComponent(_simulator, _name) {}
   ~TestComponent() {}
 };
+}  // namespace
 
 TEST(Mapper, simulatorAssignment) {
   for (u32 numExecuters : std::vector<u32>({1, 2, 10, 100})) {
@@ -61,7 +64,7 @@ TEST(Mapper, simulatorAssignment) {
     sim->setMapper(mapper);
 
     // create components
-    std::vector<des::Component*> comps;
+    std::vector<des::ActiveComponent*> comps;
     const u32 kNumComps = 10000;
     for (u32 c = 0; c < kNumComps; c++) {
       comps.push_back(new TestComponent(sim, std::to_string(c)));

@@ -37,21 +37,21 @@
 
 namespace des {
 
-class Component;
+class ActiveComponent;
 
 // This defines an event handler function pointer.
 class Event;
-typedef void (Component::*EventHandler)(Event*);
+typedef void (ActiveComponent::*EventHandler)(Event*);
 
 // This is the base class for all events.
 class Event {
  public:
   Event();
-  Event(Component* _component, EventHandler _handler);
-  Event(Component* _component, EventHandler _handler, Time _time);
+  Event(ActiveComponent* _component, EventHandler _handler);
+  Event(ActiveComponent* _component, EventHandler _handler, Time _time);
   virtual ~Event();
 
-  Component* component;
+  ActiveComponent* component;
   EventHandler handler;
   Time time;
 
@@ -71,10 +71,11 @@ class ItemEvent : public Event {
  public:
   ItemEvent();
   explicit ItemEvent(T _item);
-  ItemEvent(Component* _component, EventHandler _handler);
-  ItemEvent(Component* _component, EventHandler _handler, T _item);
-  ItemEvent(Component* _component, EventHandler _handler, Time _time);
-  ItemEvent(Component* _component, EventHandler _handler, Time _time, T _item);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler, T _item);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time,
+            T _item);
   ~ItemEvent();
   T item;
 };
