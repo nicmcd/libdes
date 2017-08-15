@@ -182,6 +182,9 @@ class Simulator {
     // this variable tracks the last amount of events reported
     u64 lastEventCount;
 
+    // this variable tracks the last amount of timeSteps reported
+    u64 lastTimeStepCount;
+
     // this variable tracks the last tick reported
     u64 lastTick;
   };

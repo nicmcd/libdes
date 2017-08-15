@@ -92,11 +92,12 @@ Simulator::Simulator(u32 _numExecuters)
   stats_.eventCount.store(0, std::memory_order_release);
   stats_.timeStepCount = 0;
   stats_.lastEventCount = 0;
+  stats_.lastTimeStepCount = 0;
   stats_.lastTick = 0;
 
   // observer defaults
   observingInterval_ = 1.0;
-  observingMask_ = 1 < 10;
+  observingMask_ = (1 << 10) - 1;
 }
 
 Simulator::~Simulator() {
@@ -491,8 +492,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
     // show progress statistics
     if (observers_.size() > 0) {
       // use the event mask to reduce the amount of time retrieving
-      u64 eventCount = stats_.eventCount.load(std::memory_order_acquire);
-      if ((eventCount & observingMask_) == 0) {
+      if ((stats_.timeStepCount & observingMask_) == 0) {
         // get the time to see if some progress observing is needed
         std::chrono::steady_clock::time_point realTime =
             std::chrono::steady_clock::now();
@@ -503,7 +503,10 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
         if (elapsedTime >= observingInterval_) {
           // gather and compute all needed statistics
           u64 tick = time().tick();
+          u64 eventCount = stats_.eventCount.load(std::memory_order_acquire);
           u64 intervalEventCount = eventCount - stats_.lastEventCount;
+          u64 intervalTimeStepCount = stats_.timeStepCount -
+              stats_.lastTimeStepCount;
           u64 intervalTick = tick - stats_.lastTick;
           std::chrono::duration<f64> totalRealTime =
               std::chrono::duration_cast<std::chrono::duration<f64>>(
@@ -517,6 +520,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
           stats.ticks = tick + 1;
           stats.eventsPerSecond = intervalEventCount / elapsedTime;
           stats.ticksPerSecond = intervalTick / elapsedTime;
+          stats.stepsPerSecond = intervalTimeStepCount / elapsedTime;
           for (Observer* observer : observers_) {
             observer->progressStatistics(stats);
           }
@@ -524,6 +528,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
           // save lasts for next time
           stats_.lastRealTime = realTime;
           stats_.lastEventCount = eventCount;
+          stats_.lastTimeStepCount = stats_.timeStepCount;
           stats_.lastTick = tick;
         }
       }

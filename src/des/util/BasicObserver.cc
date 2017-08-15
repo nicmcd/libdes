@@ -71,12 +71,13 @@ void BasicObserver::progressStatistics(
         statsString_, STATS_SIZE,
         "%lu:%02lu:%02lu:%02lu : "
         "%lu events : %lu ticks : %.0f events/sec : "
-        "%.0f ticks/sec\n",
+        "%.0f ticks/sec : %.0f steps/sec\n",
         days, hours, minutes, seconds,
         _progressStats.eventCount,
         _progressStats.ticks,
         _progressStats.eventsPerSecond,
-        _progressStats.ticksPerSecond);
+        _progressStats.ticksPerSecond,
+        _progressStats.stepsPerSecond);
     assert(r > 0 && r < (s32)STATS_SIZE);
     logger_->log(statsString_, r);
   }
@@ -88,6 +89,7 @@ void BasicObserver::summaryStatistics(
     f64 eventsPerSecond = _summaryStats.eventCount / _summaryStats.seconds;
     f64 eventsPerTick = _summaryStats.eventCount / _summaryStats.ticks;
     f64 ticksPerSecond = _summaryStats.ticks / _summaryStats.seconds;
+    f64 stepsPerSecond = _summaryStats.timeSteps / _summaryStats.seconds;
 
     s32 r = snprintf(
         statsString_, STATS_SIZE,
@@ -99,13 +101,15 @@ void BasicObserver::summaryStatistics(
         "Events per second:     %.3f\n"
         "Events per sim tick:   %.3f\n"
         "Sim ticks per second:  %.3f\n"
+        "Time steps per second: %.3f\n"
         "\n",
         _summaryStats.eventCount,
         _summaryStats.timeSteps,
         _summaryStats.seconds,
         eventsPerSecond,
         eventsPerTick,
-        ticksPerSecond);
+        ticksPerSecond,
+        stepsPerSecond);
     assert(r > 0 && r < (s32)STATS_SIZE);
     logger_->log(statsString_, r);
   }

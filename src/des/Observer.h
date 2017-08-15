@@ -44,6 +44,7 @@ class Observer {
     u64 ticks;
     f64 eventsPerSecond;
     f64 ticksPerSecond;
+    f64 stepsPerSecond;
   };
 
   // this struct contains the variables passed for summary statistics
