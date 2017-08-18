@@ -43,6 +43,9 @@ class ActiveComponent;
 class Event;
 typedef void (ActiveComponent::*EventHandler)(Event*);
 
+// This define create an easy way to cast a class method into an EventHandler
+#define makeHandler(X, Y) (static_cast<des::EventHandler>(&X::Y))
+
 // This is the base class for all events.
 class Event {
  public:

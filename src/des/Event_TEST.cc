@@ -59,7 +59,7 @@ TEST(Event, constructor2) {
   des::Simulator sim;
   MyComponent component(&sim);
   des::Event evt(&component,
-                 static_cast<des::EventHandler>(&MyComponent::ignoreEvent));
+                 makeHandler(MyComponent, ignoreEvent));
   ASSERT_EQ(evt.component, &component);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
       &MyComponent::ignoreEvent));
@@ -71,7 +71,7 @@ TEST(Event, constructor3) {
   MyComponent component(&sim);
   des::Time etime(123456789, 9);
   des::Event evt(&component,
-                 static_cast<des::EventHandler>(&MyComponent::ignoreEvent),
+                 makeHandler(MyComponent, ignoreEvent),
                  etime);
   ASSERT_EQ(evt.component, &component);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
@@ -83,7 +83,7 @@ TEST(Event, constructor3b) {
   des::Simulator sim;
   MyComponent component(&sim);
   des::Event evt(&component,
-                 static_cast<des::EventHandler>(&MyComponent::ignoreEvent),
+                 makeHandler(MyComponent, ignoreEvent),
                  des::Time(123456789, 9));
   ASSERT_EQ(evt.component, &component);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
@@ -122,7 +122,7 @@ TEST(Event, item) {
   des::Simulator sim;
   MyComponent component(&sim);
   des::ItemEvent<u32> evt(
-      &component, static_cast<des::EventHandler>(&MyComponent::ignoreEvent),
+      &component, makeHandler(MyComponent, ignoreEvent),
       des::Time(123456789, 9), 0xDEAFBEEF);
   ASSERT_EQ(evt.component, &component);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
