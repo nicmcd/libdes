@@ -113,4 +113,19 @@ class Time {
 
 }  // namespace des
 
+// some people think it is bad form to make anything inside of namespace std,
+//  but it is a very good idea to be able to put des::Time in a hashed container
+//  like std::unordered_set and std::unordered_map.
+namespace std {
+
+template <>
+struct hash<des::Time> {
+  size_t operator()(const des::Time& _t) const {
+    std::hash<des::TimeStep> tsHash;
+    return tsHash(_t.raw());
+  }
+};
+
+}  // namespace std
+
 #endif  // DES_TIME_H_

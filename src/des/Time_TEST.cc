@@ -32,6 +32,8 @@
 
 #include <gtest/gtest.h>
 
+#include <unordered_set>
+
 TEST(Time, constructor1) {
   des::Time t;
   ASSERT_EQ(t.tick(), des::TICK_INV);
@@ -607,4 +609,13 @@ TEST(Time, valid) {
 TEST(Time, raw) {
   des::Time a(34, 3);
   ASSERT_EQ(a.raw(), (34lu << des::EPSILON_BITS) + 3);
+}
+
+TEST(Time, hash) {
+  std::unordered_set<des::Time> times;
+  ASSERT_TRUE(times.insert(des::Time(1000, 10)).second);
+  ASSERT_FALSE(times.insert(des::Time(1000, 10)).second);
+  ASSERT_TRUE(times.insert(des::Time(1001, 10)).second);
+  ASSERT_TRUE(times.insert(des::Time(1000, 11)).second);
+  ASSERT_EQ(times.size(), 3u);
 }
