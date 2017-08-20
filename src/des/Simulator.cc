@@ -72,6 +72,13 @@ struct alignas(CACHELINE_SIZE) ExecuterState {
 // this creates a thread local version of ExecuterState for each executer
 static thread_local ExecuterState exeState;
 
+// This is a special TimeStep value that is not TIMESTEP_INV and is also
+//  not a valid TimeStep. This is used by the executers to indicate that they
+//  don't have any events for the future. Executers exit their execution if this
+//  becomes the next time step to execute/
+static const u64 TIMESTEP_INF = TICK_INV << EPSILON_BITS;
+static_assert(TIMESTEP_INF != TIMESTEP_INV, "bad TIMESTEP_INF");
+
 
 Simulator::Simulator()
     : Simulator(1) {}
@@ -80,6 +87,9 @@ Simulator::Simulator(u32 _numExecuters)
     : numExecuters_(_numExecuters), initialized_(false), mapper_(nullptr) {
   // check inputs
   assert(numExecuters_ > 0);
+
+  // check TIMESTEP_INF is invalid time
+  assert(!Time::create(TIMESTEP_INF).valid());
 
   // create the event queues
   queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding
@@ -245,6 +255,7 @@ Time Simulator::futureCycle(u32 _clockId, u32 _cycles, Epsilon _epsilon) const {
 }
 
 void Simulator::addEvent(Event* _event) {
+  assert(_event->time.valid());
   TimeStep eventTimeStep = _event->time.raw();
 
   // verify event time is in the future
@@ -285,7 +296,7 @@ void Simulator::simulate() {
   state_.running.store(true, std::memory_order_release);
 
   // find the first time to simulate
-  TimeStep firstTimeStep = TIMESTEP_INV;
+  TimeStep firstTimeStep = TIMESTEP_INF;
   for (u32 id = 0; id < numExecuters_; id++) {
     MpScQueue& oqueue = queueSets_[id].oqueue;
     EventQueue& pqueue = queueSets_[id].pqueue;
@@ -310,7 +321,7 @@ void Simulator::simulate() {
       std::chrono::steady_clock::now();
 
   // only attempt to run if needed
-  if (firstTimeStep < TIMESTEP_INV) {
+  if (firstTimeStep < TIMESTEP_INF) {
     // initialize the barrier
     barrierInit(firstTimeStep);
 
@@ -358,12 +369,8 @@ u32 Simulator::executerId() const {
 }
 
 void Simulator::executer(u32 _id) {
-  // set up the thread local executer id
-  exeState.id = _id;
-
-  // always start on epoch false(0)
-  //  this is used in the barrier
-  exeState.epoch = false;
+  // init the barrier for this executer
+  barrierExecuterInit(_id);
 
   // get a reference to the event queues
   MpScQueue& oqueue = queueSets_[_id].oqueue;
@@ -375,7 +382,7 @@ void Simulator::executer(u32 _id) {
   // loop forever
   while (true) {
     // execute events for this timestep, track minimum timestep of new events
-    exeState.minTimeStep = TIMESTEP_INV;
+    exeState.minTimeStep = TIMESTEP_INF;
 
     // loop until all events up to the current time have been executed
     u64 executed = 0;
@@ -406,7 +413,7 @@ void Simulator::executer(u32 _id) {
         }
       } else {
         // the queue is empty, done
-        queueMinTimeStep = TIMESTEP_INV;
+        queueMinTimeStep = TIMESTEP_INF;
         done = true;
       }
       if (done) {
@@ -428,7 +435,8 @@ void Simulator::executer(u32 _id) {
 
     // hit the barrier, get the new time step to execute
     cTimeStep = barrier(_id, minTimeStep, executed);
-    if (cTimeStep == TIMESTEP_INV) {
+    assert(cTimeStep != TIMESTEP_INV);
+    if (cTimeStep == TIMESTEP_INF) {
       break;  // break the loop when done
     }
   }
@@ -451,7 +459,18 @@ void Simulator::barrierInit(TimeStep _firstTimeStep) {
 
   // set the nextTimeStep to start simulation
   state_.nextTimeStep[0].store(_firstTimeStep, std::memory_order_release);
-  state_.nextTimeStep[1].store(TIMESTEP_INV, std::memory_order_release);
+  state_.nextTimeStep[1].store(TIMESTEP_INF, std::memory_order_release);
+}
+
+void Simulator::barrierExecuterInit(u32 _id) {
+  // set up the thread local executer id
+  exeState.id = _id;
+
+  // always start on epoch false(0)
+  //  this is used in the barrier
+  exeState.epoch = false;
+
+  // NOTE: no sub-barrier needed for this barrier implementation
 }
 
 TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
@@ -483,7 +502,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
     // set the next time
     TimeStep nextTimeStep = state_.nextTimeStep[!exeState.epoch].load(
         std::memory_order_acquire);
-    bool done = nextTimeStep == TIMESTEP_INV;
+    bool done = nextTimeStep == TIMESTEP_INF;
     if (done) {
       nextTimeStep = time().nextEpsilon().raw();
     }
@@ -536,7 +555,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
 
     // reset the next time step
     state_.nextTimeStep[exeState.epoch].store(
-        TIMESTEP_INV, std::memory_order_release);
+        TIMESTEP_INF, std::memory_order_release);
 
     // reset yetToArrive
     state_.yetToArrive.store(numExecuters_, std::memory_order_release);

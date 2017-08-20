@@ -200,6 +200,13 @@ class Simulator {
   //  _firstTimeStep - the first time step to be simulated
   void barrierInit(TimeStep _firstTimeStep);
 
+  // this initializes executer id and executer specific barrier data
+  //  WARNING: the barrier must have a sub-barrier if one executer depends on
+  //  the initialization of other executers data structures
+  // Args:
+  //  _id - the ID of this executer
+  void barrierExecuterInit(u32 _id);
+
   // this is the barrier function each executer thread calls on each time step
   // Args:
   //  _id - the ID of this executer
