@@ -87,7 +87,7 @@ class Simulator {
   void removeComponent(const std::string& _fullname);
   u64 numComponents() const;
   void addDebugName(const std::string& _fullname);
-  void debugCheck();
+  void debugNameCheck();
 
   // clocks
   u32 addClock(Tick _period, Tick _phase);

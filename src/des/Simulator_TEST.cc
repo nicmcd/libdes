@@ -66,7 +66,7 @@ TEST(Simulator, debug) {
   TestComponent tc3("right", &tc1);
   ASSERT_TRUE(tc3.debug);
 
-  sim.debugCheck();
+  sim.debugNameCheck();
 }
 
 TEST(Simulator, numComponents) {
@@ -263,7 +263,7 @@ TEST(Simulator, inheritRaceFreeThreadLocal) {
       ASSERT_TRUE(comps.at(cnt)->debug);
     }
 
-    sim->debugCheck();
+    sim->debugNameCheck();
     sim->initialize();
     sim->simulate();
 

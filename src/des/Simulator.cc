@@ -201,7 +201,7 @@ void Simulator::addDebugName(const std::string& _fullname) {
   assert(res);
 }
 
-void Simulator::debugCheck() {
+void Simulator::debugNameCheck() {
   // ensure that all Components that were marked to be debugged got accounted
   //  for during component construction
   for (auto it = toBeDebugged_.begin(); it != toBeDebugged_.end(); ++it) {
