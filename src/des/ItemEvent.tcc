@@ -28,9 +28,11 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_EVENT_H_
+#ifndef DES_ITEMEVENT_H_
 #error "Do not include this .tcc file directly, use the .h file instead"
 #else
+
+namespace des {
 
 template <typename T>
 ItemEvent<T>::ItemEvent()
@@ -62,4 +64,6 @@ ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
 template <typename T>
 ItemEvent<T>::~ItemEvent() {}
 
-#endif  // DES_EVENT_H_
+}  // namespace des
+
+#endif  // DES_ITEMEVENT_H_

@@ -28,17 +28,33 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_DES_H_
-#define DES_DES_H_
+#ifndef DES_ITEMEVENT_H_
+#define DES_ITEMEVENT_H_
 
-#include "des/ActiveComponent.h"
-#include "des/Component.h"
 #include "des/Event.h"
-#include "des/ItemEvent.h"
-#include "des/Logger.h"
-#include "des/Mapper.h"
-#include "des/Observer.h"
-#include "des/Simulator.h"
 #include "des/Time.h"
 
-#endif  // DES_DES_H_
+namespace des {
+
+class ActiveComponent;
+
+// This is a simple template class to contain a single item in an event
+template <typename T>
+class ItemEvent : public Event {
+ public:
+  ItemEvent();
+  explicit ItemEvent(T _item);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler, T _item);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time);
+  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time,
+            T _item);
+  ~ItemEvent();
+  T item;
+};
+
+}  // namespace des
+
+#include "ItemEvent.tcc"
+
+#endif  // DES_ITEMEVENT_H_

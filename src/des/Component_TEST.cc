@@ -32,7 +32,7 @@
 
 #include <gtest/gtest.h>
 
-#include "des/des.h"
+#include "des/Simulator.h"
 
 namespace {
 class TestComponent : public des::Component {

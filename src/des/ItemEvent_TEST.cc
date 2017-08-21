@@ -28,7 +28,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/Event.h"
+#include "des/ItemEvent.h"
 
 #include <gtest/gtest.h>
 
@@ -46,74 +46,15 @@ class MyComponent : public des::ActiveComponent {
 };
 }  // namespace
 
-TEST(Event, constructor1) {
+TEST(Event, item) {
   des::Simulator sim;
   MyComponent component(&sim);
-  des::Event evt;
-  ASSERT_EQ(evt.component, nullptr);
-  ASSERT_EQ(evt.handler, nullptr);
-  ASSERT_TRUE(evt.time ==  des::Time());
-}
-
-TEST(Event, constructor2) {
-  des::Simulator sim;
-  MyComponent component(&sim);
-  des::Event evt(&component,
-                 makeHandler(MyComponent, ignoreEvent));
-  ASSERT_EQ(evt.component, &component);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
-      &MyComponent::ignoreEvent));
-  ASSERT_TRUE(evt.time == des::Time());
-}
-
-TEST(Event, constructor3) {
-  des::Simulator sim;
-  MyComponent component(&sim);
-  des::Time etime(123456789, 9);
-  des::Event evt(&component,
-                 makeHandler(MyComponent, ignoreEvent),
-                 etime);
-  ASSERT_EQ(evt.component, &component);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
-      &MyComponent::ignoreEvent));
-  ASSERT_TRUE(evt.time == etime);
-}
-
-TEST(Event, constructor3b) {
-  des::Simulator sim;
-  MyComponent component(&sim);
-  des::Event evt(&component,
-                 makeHandler(MyComponent, ignoreEvent),
-                 des::Time(123456789, 9));
+  des::ItemEvent<u32> evt(
+      &component, makeHandler(MyComponent, ignoreEvent),
+      des::Time(123456789, 9), 0xDEAFBEEF);
   ASSERT_EQ(evt.component, &component);
   ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
       &MyComponent::ignoreEvent));
   ASSERT_TRUE(evt.time == des::Time(123456789, 9));
-}
-
-TEST(Event, eventCompare) {
-  des::EventComparator comp;
-
-  des::Event e1;
-  des::Event e2;
-
-  e1.time = des::Time(100, 0);
-  e2.time = des::Time(99, 1);
-  ASSERT_TRUE(comp(&e1, &e2));
-
-  e1.time = des::Time(100, 1);
-  e2.time = des::Time(100, 0);
-  ASSERT_TRUE(comp(&e1, &e2));
-
-  e1.time = des::Time(100, 0);
-  e2.time = des::Time(100, 0);
-  ASSERT_FALSE(comp(&e1, &e2));
-
-  e1.time = des::Time(100, 0);
-  e2.time = des::Time(101, 0);
-  ASSERT_FALSE(comp(&e1, &e2));
-
-  e1.time = des::Time(100, 0);
-  e2.time = des::Time(100, 1);
-  ASSERT_FALSE(comp(&e1, &e2));
+  ASSERT_EQ(evt.item, 0xDEAFBEEF);
 }

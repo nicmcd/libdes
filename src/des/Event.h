@@ -68,23 +68,6 @@ class EventComparator {
   bool operator()(const Event* _lhs, const Event* _rhs) const;
 };
 
-// This is a simple template class to contain a single item in an event
-template <typename T>
-class ItemEvent : public Event {
- public:
-  ItemEvent();
-  explicit ItemEvent(T _item);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler, T _item);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time,
-            T _item);
-  ~ItemEvent();
-  T item;
-};
-
-#include "Event.tcc"
-
 }  // namespace des
 
 #endif  // DES_EVENT_H_
