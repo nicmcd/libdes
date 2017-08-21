@@ -28,33 +28,47 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#include "des/ItemEvent.h"
+#ifndef DES_TUPLEEVENT_H_
+#error "Do not include this .tcc file directly, use the .h file instead"
+#else
 
-#include <gtest/gtest.h>
+namespace des {
 
-#include "des/ActiveComponent.h"
-#include "des/Component.h"
-#include "des/Simulator.h"
-#include "des/Time.h"
+template <typename... Types>
+TupleEvent<Types...>::TupleEvent()
+    : Event() {}
 
-namespace {
-class MyComponent : public des::ActiveComponent {
- public:
-  explicit MyComponent(des::Simulator* _sim)
-      : des::ActiveComponent(_sim, "component") {}
-  void ignoreEvent(des::Event*) {}
-};
-}  // namespace
+template <typename... Types>
+TupleEvent<Types...>::TupleEvent(
+    const Types&... _types)
+    : Event(), tuple(_types...) {}
 
-TEST(Event, item) {
-  des::Simulator sim;
-  MyComponent component(&sim);
-  des::ItemEvent<u32> evt(
-      &component, makeHandler(MyComponent, ignoreEvent),
-      des::Time(123456789, 9), 0xDEAFBEEF);
-  ASSERT_EQ(evt.component, &component);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
-      &MyComponent::ignoreEvent));
-  ASSERT_TRUE(evt.time == des::Time(123456789, 9));
-  ASSERT_EQ(evt.item, 0xDEAFBEEF);
-}
+template <typename... Types>
+TupleEvent<Types...>::TupleEvent(
+    ActiveComponent* _component, EventHandler _handler)
+    : Event(_component, _handler) {}
+
+template <typename... Types>
+TupleEvent<Types...>::TupleEvent(
+    ActiveComponent* _component, EventHandler _handler,
+    const Types&... _types)
+    : Event(_component, _handler), tuple(_types...) {}
+
+template <typename... Types>
+TupleEvent<Types...>::TupleEvent(
+    ActiveComponent* _component, EventHandler _handler,
+    Time _time)
+    : Event(_component, _handler, _time) {}
+
+template <typename... Types>
+TupleEvent<Types...>::TupleEvent(
+    ActiveComponent* _component, EventHandler _handler,
+    Time _time, const Types&... _types)
+    : Event(_component, _handler, _time), tuple(_types...) {}
+
+template <typename... Types>
+TupleEvent<Types...>::~TupleEvent() {}
+
+}  // namespace des
+
+#endif  // DES_TUPLEEVENT_H_

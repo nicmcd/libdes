@@ -28,8 +28,10 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_ITEMEVENT_H_
-#define DES_ITEMEVENT_H_
+#ifndef DES_TUPLEEVENT_H_
+#define DES_TUPLEEVENT_H_
+
+#include <tuple>
 
 #include "des/Event.h"
 #include "des/Time.h"
@@ -38,23 +40,26 @@ namespace des {
 
 class ActiveComponent;
 
-// This is a simple template class to contain a single item in an event
-template <typename T>
-class ItemEvent : public Event {
+// This is a simple template class to contain a single tuple in an event
+template <typename... Types>
+class TupleEvent : public Event {
  public:
-  ItemEvent();
-  explicit ItemEvent(T _item);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler, T _item);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time);
-  ItemEvent(ActiveComponent* _component, EventHandler _handler, Time _time,
-            T _item);
-  ~ItemEvent();
-  T item;
+  TupleEvent();
+  explicit TupleEvent(const Types&...);
+  TupleEvent(ActiveComponent* _component, EventHandler _handler);
+  TupleEvent(ActiveComponent* _component, EventHandler _handler,
+             const Types&...);
+  TupleEvent(ActiveComponent* _component, EventHandler _handler,
+             Time _time);
+  TupleEvent(ActiveComponent* _component, EventHandler _handler,
+             Time _time, const Types&...);
+  ~TupleEvent();
+
+  std::tuple<Types...> tuple;
 };
 
 }  // namespace des
 
-#include "ItemEvent.tcc"
+#include "TupleEvent.tcc"
 
-#endif  // DES_ITEMEVENT_H_
+#endif  // DES_TUPLEEVENT_H_

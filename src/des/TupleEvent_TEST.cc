@@ -28,42 +28,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_ITEMEVENT_H_
-#error "Do not include this .tcc file directly, use the .h file instead"
-#else
+#include "des/TupleEvent.h"
 
-namespace des {
+#include <gtest/gtest.h>
 
-template <typename T>
-ItemEvent<T>::ItemEvent()
-    : Event() {}
+#include "des/ActiveComponent.h"
+#include "des/Component.h"
+#include "des/Simulator.h"
+#include "des/Time.h"
 
-template <typename T>
-ItemEvent<T>::ItemEvent(T _item)
-    : Event(), item(_item) {}
+namespace {
+class MyComponent : public des::ActiveComponent {
+ public:
+  explicit MyComponent(des::Simulator* _sim)
+      : des::ActiveComponent(_sim, "component") {}
+  void ignoreEvent(des::Event*) {}
+};
+}  // namespace
 
-template <typename T>
-ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler)
-    : Event(_component, _handler) {}
-
-template <typename T>
-ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
-                        T _item)
-    : Event(_component, _handler), item(_item) {}
-
-template <typename T>
-ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
-                        Time _time)
-    : Event(_component, _handler, _time) {}
-
-template <typename T>
-ItemEvent<T>::ItemEvent(ActiveComponent* _component, EventHandler _handler,
-                        Time _time, T _item)
-    : Event(_component, _handler, _time), item(_item) {}
-
-template <typename T>
-ItemEvent<T>::~ItemEvent() {}
-
-}  // namespace des
-
-#endif  // DES_ITEMEVENT_H_
+TEST(Event, tuple) {
+  des::Simulator sim;
+  MyComponent component(&sim);
+  des::TupleEvent<u32, f64> evt(
+      &component, makeHandler(MyComponent, ignoreEvent),
+      des::Time(123456789, 9), 0xDEAFBEEF, 3.14159265359);
+  ASSERT_EQ(evt.component, &component);
+  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
+      &MyComponent::ignoreEvent));
+  ASSERT_TRUE(evt.time == des::Time(123456789, 9));
+  std::tuple<u32, f64> exp(0xDEAFBEEF, 3.14159265359);
+  ASSERT_EQ(evt.tuple, exp);
+  ASSERT_EQ(std::get<0>(evt.tuple), 0xDEAFBEEF);
+  ASSERT_EQ(std::get<1>(evt.tuple), 3.14159265359);
+}

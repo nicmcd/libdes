@@ -34,11 +34,11 @@
 #include "des/ActiveComponent.h"
 #include "des/Component.h"
 #include "des/Event.h"
-#include "des/ItemEvent.h"
 #include "des/Logger.h"
 #include "des/Mapper.h"
 #include "des/Observer.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
+#include "des/TupleEvent.h"
 
 #endif  // DES_DES_H_
