@@ -83,6 +83,9 @@ void BasicObserver::progressStatistics(
 void BasicObserver::summaryStatistics(
     const Observer::SummaryStatistics& _summaryStats) {
   if (logSummary_) {
+    assert(_summaryStats.seconds > 0.0);
+    assert(_summaryStats.ticks > 0.0);
+
     f64 eventsPerSecond = _summaryStats.eventCount / _summaryStats.seconds;
     f64 eventsPerTick = _summaryStats.eventCount / _summaryStats.ticks;
     f64 ticksPerSecond = _summaryStats.ticks / _summaryStats.seconds;

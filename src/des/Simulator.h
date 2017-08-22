@@ -31,6 +31,7 @@
 #ifndef DES_SIMULATOR_H_
 #define DES_SIMULATOR_H_
 
+#include <numa.h>
 #include <prim/prim.h>
 
 #include <atomic>
@@ -128,6 +129,12 @@ class Simulator {
     char padding2[CACHELINE_SIZE];
   };
 
+  // this is a struct for holding an atomic minTime
+  struct alignas(CACHELINE_SIZE) MinTime {
+    std::atomic<TimeStep> minTimeStep;
+    char padding1[CLPAD(sizeof(minTimeStep))];
+  };
+
   // these variables are read/write shared variables for the executers
   //  these are cache line aligned and padded individually
   struct alignas(CACHELINE_SIZE) State {
@@ -135,27 +142,9 @@ class Simulator {
     //  which does not adhere to the alignas specifier
     char padding0[CACHELINE_SIZE];
 
-    // this variable tells the executers to continue
-    std::atomic<bool> running;
-    char padding1[CLPAD(sizeof(running))];
-
-    // this variable is the current time of execution
-    TimeStep timeStep;
-    char padding2[CLPAD(sizeof(timeStep))];
-
-    // this variable is used by the executers to determine which epoch they are
-    //  currently working in
-    std::atomic<bool> epoch;
-    char padding3[CLPAD(sizeof(epoch))];
-
-    // this variable tracks how many executers have not yet hit the timestep
-    //  barrier in the current epoch
+    // this variable tracks how many executers have not yet hit the init barrier
     std::atomic<u32> yetToArrive;
-    char padding4[CLPAD(sizeof(yetToArrive))];
-
-    // this variable tracks the next time step to be used by epoch
-    std::atomic<TimeStep> nextTimeStep[2];
-    char padding5[CLPAD(sizeof(nextTimeStep))];
+    char padding1[CLPAD(sizeof(yetToArrive))];
   };
 
   // these variables are read/write shared variables for the purpose of stats
@@ -190,7 +179,7 @@ class Simulator {
   };
 
   // this is the function that gets called per executer thread
-  void executer(u32 _id);
+  void executer(u32 _id, std::vector<MinTime*>* _minTimeArrays);
 
   // get the initial time step to be simulated by the executers
   TimeStep initialTimeStep();
@@ -201,11 +190,10 @@ class Simulator {
   void barrierInit(TimeStep _firstTimeStep);
 
   // this initializes executer id and executer specific barrier data
-  //  WARNING: the barrier must have a sub-barrier if one executer depends on
-  //  the initialization of other executers data structures
   // Args:
   //  _id - the ID of this executer
-  void barrierExecuterInit(u32 _id);
+  // _minTimeArrays - a pointer to a vector of MinTime arrays
+  void barrierExecuterInit(u32 _id, std::vector<MinTime*>* _minTimeArrays);
 
   // this is the barrier function each executer thread calls on each time step
   // Args:
@@ -220,6 +208,11 @@ class Simulator {
   const u32 numExecuters_;
   State state_;
   Stats stats_;
+  bool running_;
+  TimeStep timeStep_;  // not current while running
+
+  // number of iterations in the barriers
+  u32 barrierIterations_;
 
   // per-executer queue sets
   QueueSet* queueSets_;
@@ -243,6 +236,8 @@ class Simulator {
 
   // clocks
   std::vector<std::pair<Tick, Tick> > clocks_;
+
+  friend class ExecuterState;
 };
 
 }  // namespace des
