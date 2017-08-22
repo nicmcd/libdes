@@ -81,6 +81,13 @@ TupleEvent<Types...>::get() {
   return std::get<Index>(tuple);
 }
 
+template <typename... Types>
+template <std::size_t Index>
+void TupleEvent<Types...>::set(const typename std::tuple_element<
+                               Index, std::tuple<Types...> >::type& _v) {
+  std::get<Index>(tuple) = _v;
+}
+
 }  // namespace des
 
 #endif  // DES_TUPLEEVENT_H_

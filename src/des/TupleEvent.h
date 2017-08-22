@@ -74,6 +74,11 @@ class TupleEvent : public Event {
   template <std::size_t Index>
   typename std::tuple_element<Index, std::tuple<Types...> >::type& get();
 
+  // sets an element in the tuple
+  template <std::size_t Index>
+  void set(const typename std::tuple_element<
+           Index, std::tuple<Types...> >::type& _v);
+
   // this is the actual tuple object
   //  most users won't need this
   std::tuple<Types...> tuple;

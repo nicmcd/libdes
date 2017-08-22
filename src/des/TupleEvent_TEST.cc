@@ -62,6 +62,10 @@ TEST(Event, tuple) {
     ASSERT_EQ(evt0.get<0>(), 0u);
     ASSERT_EQ(std::get<1>(evt0.tuple), 0.0);
     ASSERT_EQ(evt0.get<1>(), 0.0);
+    std::get<0>(evt0.tuple) = 10u;
+    ASSERT_EQ(std::get<0>(evt0.tuple), 10u);
+    evt0.set<0>(20u);
+    ASSERT_EQ(std::get<0>(evt0.tuple), 20u);
   }
   {
     des::TupleEvent<u32, f64> evt1(0xDEAFBEEF, 3.14159265359);
@@ -73,6 +77,10 @@ TEST(Event, tuple) {
     ASSERT_EQ(evt1.get<0>(), 0xDEAFBEEF);
     ASSERT_EQ(std::get<1>(evt1.tuple), 3.14159265359);
     ASSERT_EQ(evt1.get<1>(), 3.14159265359);
+    std::get<0>(evt1.tuple) = 10u;
+    ASSERT_EQ(std::get<0>(evt1.tuple), 10u);
+    evt1.set<0>(20u);
+    ASSERT_EQ(std::get<0>(evt1.tuple), 20u);
   }
   {
     des::TupleEvent<u32, f64> evt2(
@@ -86,6 +94,10 @@ TEST(Event, tuple) {
     ASSERT_EQ(evt2.get<0>(), 0u);
     ASSERT_EQ(std::get<1>(evt2.tuple), 0.0);
     ASSERT_EQ(evt2.get<1>(), 0.0);
+    std::get<0>(evt2.tuple) = 10u;
+    ASSERT_EQ(std::get<0>(evt2.tuple), 10u);
+    evt2.set<0>(20u);
+    ASSERT_EQ(std::get<0>(evt2.tuple), 20u);
   }
   {
     des::TupleEvent<u32, f64> evt3(
@@ -100,6 +112,10 @@ TEST(Event, tuple) {
     ASSERT_EQ(evt3.get<0>(), 0xDEAFBEEF);
     ASSERT_EQ(std::get<1>(evt3.tuple), 3.14159265359);
     ASSERT_EQ(evt3.get<1>(), 3.14159265359);
+    std::get<0>(evt3.tuple) = 10u;
+    ASSERT_EQ(std::get<0>(evt3.tuple), 10u);
+    evt3.set<0>(20u);
+    ASSERT_EQ(std::get<0>(evt3.tuple), 20u);
   }
   {
     des::TupleEvent<u32, f64> evt4(
@@ -114,6 +130,10 @@ TEST(Event, tuple) {
     ASSERT_EQ(evt4.get<0>(), 0u);
     ASSERT_EQ(std::get<1>(evt4.tuple), 0.0);
     ASSERT_EQ(evt4.get<1>(), 0.0);
+    std::get<0>(evt4.tuple) = 10u;
+    ASSERT_EQ(std::get<0>(evt4.tuple), 10u);
+    evt4.set<0>(20u);
+    ASSERT_EQ(std::get<0>(evt4.tuple), 20u);
   }
   {
     des::TupleEvent<u32, f64> evt5(
@@ -128,6 +148,10 @@ TEST(Event, tuple) {
     ASSERT_EQ(evt5.get<0>(), 0xDEAFBEEF);
     ASSERT_EQ(std::get<1>(evt5.tuple), 3.14159265359);
     ASSERT_EQ(evt5.get<1>(), 3.14159265359);
+    std::get<0>(evt5.tuple) = 10u;
+    ASSERT_EQ(std::get<0>(evt5.tuple), 10u);
+    evt5.set<0>(20u);
+    ASSERT_EQ(std::get<0>(evt5.tuple), 20u);
   }
 }
 
