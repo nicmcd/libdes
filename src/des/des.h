@@ -39,6 +39,5 @@
 #include "des/Observer.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
-#include "des/TupleEvent.h"
 
 #endif  // DES_DES_H_
