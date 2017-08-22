@@ -44,17 +44,38 @@ class ActiveComponent;
 template <typename... Types>
 class TupleEvent : public Event {
  public:
+  // initializes nothing
   TupleEvent();
+
+  // initializes only the tuple
+  template <typename Dummy = void>  // needed for <> case
   explicit TupleEvent(const Types&...);
+
+  // initializes component and handler
   TupleEvent(ActiveComponent* _component, EventHandler _handler);
+
+  // initializes component, handler, and tuple
+  template <typename Dummy = void>  // needed for <> case
   TupleEvent(ActiveComponent* _component, EventHandler _handler,
              const Types&...);
+
+  // initializes component, handler, and time
   TupleEvent(ActiveComponent* _component, EventHandler _handler,
              Time _time);
+
+  // initializes component, handler, time, and tuple
+  template <typename Dummy = void>  // needed for <> case
   TupleEvent(ActiveComponent* _component, EventHandler _handler,
              Time _time, const Types&...);
+
   ~TupleEvent();
 
+  // gets an element from the tuple
+  template <std::size_t Index>
+  typename std::tuple_element<Index, std::tuple<Types...> >::type& get();
+
+  // this is the actual tuple object
+  //  most users won't need this
   std::tuple<Types...> tuple;
 };
 

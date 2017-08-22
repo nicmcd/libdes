@@ -32,6 +32,8 @@
 #error "Do not include this .tcc file directly, use the .h file instead"
 #else
 
+#include <tuple>
+
 namespace des {
 
 template <typename... Types>
@@ -39,6 +41,7 @@ TupleEvent<Types...>::TupleEvent()
     : Event() {}
 
 template <typename... Types>
+template <typename Dummy>
 TupleEvent<Types...>::TupleEvent(
     const Types&... _types)
     : Event(), tuple(_types...) {}
@@ -49,6 +52,7 @@ TupleEvent<Types...>::TupleEvent(
     : Event(_component, _handler) {}
 
 template <typename... Types>
+template <typename Dummy>
 TupleEvent<Types...>::TupleEvent(
     ActiveComponent* _component, EventHandler _handler,
     const Types&... _types)
@@ -61,6 +65,7 @@ TupleEvent<Types...>::TupleEvent(
     : Event(_component, _handler, _time) {}
 
 template <typename... Types>
+template <typename Dummy>
 TupleEvent<Types...>::TupleEvent(
     ActiveComponent* _component, EventHandler _handler,
     Time _time, const Types&... _types)
@@ -68,6 +73,13 @@ TupleEvent<Types...>::TupleEvent(
 
 template <typename... Types>
 TupleEvent<Types...>::~TupleEvent() {}
+
+template <typename... Types>
+template <std::size_t Index>
+typename std::tuple_element<Index, std::tuple<Types...> >::type&
+TupleEvent<Types...>::get() {
+  return std::get<Index>(tuple);
+}
 
 }  // namespace des
 
