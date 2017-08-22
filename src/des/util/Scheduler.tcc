@@ -36,37 +36,42 @@
 
 namespace des {
 
-template <typename... Types>
-Scheduler<Types...>::Scheduler(
+template <typename E>
+Scheduler<E>::Scheduler(
     ActiveComponent* _component, EventHandler _handler)
     : event_(_component, _handler) {
-  timeStep_.store(TIMESTEP_INV, std::memory_order_release);
+  counter_.store(0, std::memory_order_release);
 }
 
-template <typename... Types>
-Scheduler<Types...>::~Scheduler() {}
+template <typename E>
+Scheduler<E>::~Scheduler() {}
 
-template <typename... Types>
-void Scheduler<Types...>::schedule(Time _time, const Types&... _types) const {
+template <typename E>
+E* Scheduler<E>::event() const {
+  return &event_;
+}
+
+template <typename E>
+bool Scheduler<E>::schedule(Time _time) const {
   assert(_time.valid());
 
-  // get the desired execution timestep
-  TimeStep desired = _time.raw();
+  // do a fetch-n-add to ensure the event is scheduled
+  u32 prev = counter_.fetch_add(1, std::memory_order_release);
+  if (prev == 0) {
+    // configure the event
+    event_.time = _time;
 
-  // do a CAS to set the new maxTime if needed
-  TimeStep currMax;
-  while (desired > (currMax = timeStep_.load(std::memory_order_acquire))) {
-    if (timeStep_.compare_exchange_weak(
-            currMax, desired, std::memory_order_release,
-            std::memory_order_acquire)) {
-      // configure the event
-      event_.time = _time;
-      event_.set(_types...);
+    // schedule the event
+    event_.component->simulator->addEvent(&event_);
 
-      // schedule the event
-      event_.component->simulator->addEvent(&event_);
-    }
+    return true;
   }
+  return false;
+}
+
+template <typename E>
+void Scheduler<E>::executed() const {
+  counter_.store(0, std::memory_order_release);
 }
 
 }  // namespace des

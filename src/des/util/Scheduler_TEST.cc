@@ -32,8 +32,9 @@
 
 #include <gtest/gtest.h>
 
-#include <string>
 #include <random>
+#include <string>
+#include <unordered_set>
 
 #include "des/ActiveComponent.h"
 #include "des/Component.h"
@@ -46,9 +47,11 @@
 namespace {
 class Scheduled : public des::ActiveComponent {
  public:
-  Scheduled(des::Simulator* _sim, const std::string& _name)
+  Scheduled(des::Simulator* _sim, const std::string& _name,
+            std::unordered_set<des::Time>* _exeTimes)
       : des::ActiveComponent(_sim, _name),
-        scheduler_(this, makeHandler(Scheduled, processRequests)) {
+        scheduler_(this, makeHandler(Scheduled, processRequests)),
+        exeTimes_(_exeTimes) {
     debug = false;
   }
 
@@ -59,6 +62,7 @@ class Scheduled : public des::ActiveComponent {
 
   void processRequests(des::Event* _event) {
     dlogf("processing");
+    scheduler_.executed();
 
     (void)_event;  // unused
 
@@ -67,13 +71,17 @@ class Scheduled : public des::ActiveComponent {
       assert(simulator->time() > lastTime_);
     }
 
+    // unmark this time
+    assert(exeTimes_->erase(simulator->time()) == 1);
+
     // save for next time
     lastTime_ = simulator->time();
   }
 
  private:
-  des::Scheduler<> scheduler_;
+  des::Scheduler<des::Event> scheduler_;
   des::Time lastTime_;
+  std::unordered_set<des::Time>* exeTimes_;
 };
 
 class Driver : public des::ActiveComponent {
@@ -106,7 +114,9 @@ TEST(Scheduler, basic) {
   des::Logger logger;
   sim.setLogger(&logger);
 
-  Scheduled sch(&sim, "Sch");
+  std::unordered_set<des::Time> exeTimes;
+  Scheduled sch(&sim, "Sch", &exeTimes);
+
   std::vector<Driver*> drivers;
   for (u32 d = 0; d < 1000; d++) {
     // create
@@ -115,12 +125,16 @@ TEST(Scheduler, basic) {
     // make requests
     u32 num = rnd() % 1000;
     for (u32 r = 0; r < num; r++) {
-      drivers.at(d)->createRequest(des::Time(rnd() % 10000, 0));
+      des::Time time = des::Time(rnd() % 10000, 0);
+      drivers.at(d)->createRequest(time);
+      exeTimes.insert(time.nextEpsilon());
     }
   }
 
   sim.initialize();
   sim.simulate();
+
+  ASSERT_EQ(exeTimes.size(), 0u);
 
   for (u32 d = 0; d < 1000; d++) {
     delete drivers.at(d);

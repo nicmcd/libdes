@@ -37,7 +37,6 @@
 #include "des/Component.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
-#include "des/util/TupleEvent.h"
 
 namespace des {
 
@@ -45,19 +44,26 @@ namespace des {
  * This class is commonly used for scenarios where many adjacent components
  *  are able to trigger a future event but if one is already scheduled only the
  *  single event will be created and executed
-*/
-template <typename... Types>
+ */
+template <typename E>
 class Scheduler {
  public:
   Scheduler(ActiveComponent* _component, EventHandler _handler);
   ~Scheduler();
 
-  void schedule(Time _time, const Types&... _types) const;
+  E* event() const;
+
+  // ensure the event is scheduled
+  //  returns true if this call triggered the scheduling
+  bool schedule(Time _time) const;
+
+  // informs the scheduler that the event occured
+  void executed() const;
 
  private:
-  // TODO(nic): determine if cacheline padding is need here.
-  mutable std::atomic<TimeStep> timeStep_;
-  mutable TupleEvent<Types...> event_;
+  // TODO(nic): determine if cacheline padding is needed here.
+  mutable std::atomic<u32> counter_;
+  mutable E event_;
 };
 
 }  // namespace des
