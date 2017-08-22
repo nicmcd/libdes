@@ -51,6 +51,7 @@ TEST(Event, tuple) {
   MyComponent component(&sim);
 
   std::tuple<u32, f64> exp(0xDEAFBEEF, 3.14159265359);
+  std::tuple<u32, f64> exp2(0xBEEF, 3.14);
 
   {
     des::TupleEvent<u32, f64> evt0;
@@ -66,6 +67,8 @@ TEST(Event, tuple) {
     ASSERT_EQ(std::get<0>(evt0.tuple), 10u);
     evt0.set<0>(20u);
     ASSERT_EQ(std::get<0>(evt0.tuple), 20u);
+    evt0.set(0xBEEF, 3.14);
+    ASSERT_EQ(evt0.tuple, exp2);
   }
   {
     des::TupleEvent<u32, f64> evt1(0xDEAFBEEF, 3.14159265359);
@@ -81,6 +84,8 @@ TEST(Event, tuple) {
     ASSERT_EQ(std::get<0>(evt1.tuple), 10u);
     evt1.set<0>(20u);
     ASSERT_EQ(std::get<0>(evt1.tuple), 20u);
+    evt1.set(0xBEEF, 3.14);
+    ASSERT_EQ(evt1.tuple, exp2);
   }
   {
     des::TupleEvent<u32, f64> evt2(
@@ -98,6 +103,8 @@ TEST(Event, tuple) {
     ASSERT_EQ(std::get<0>(evt2.tuple), 10u);
     evt2.set<0>(20u);
     ASSERT_EQ(std::get<0>(evt2.tuple), 20u);
+    evt2.set(0xBEEF, 3.14);
+    ASSERT_EQ(evt2.tuple, exp2);
   }
   {
     des::TupleEvent<u32, f64> evt3(
@@ -116,6 +123,8 @@ TEST(Event, tuple) {
     ASSERT_EQ(std::get<0>(evt3.tuple), 10u);
     evt3.set<0>(20u);
     ASSERT_EQ(std::get<0>(evt3.tuple), 20u);
+    evt3.set(0xBEEF, 3.14);
+    ASSERT_EQ(evt3.tuple, exp2);
   }
   {
     des::TupleEvent<u32, f64> evt4(
@@ -134,6 +143,8 @@ TEST(Event, tuple) {
     ASSERT_EQ(std::get<0>(evt4.tuple), 10u);
     evt4.set<0>(20u);
     ASSERT_EQ(std::get<0>(evt4.tuple), 20u);
+    evt4.set(0xBEEF, 3.14);
+    ASSERT_EQ(evt4.tuple, exp2);
   }
   {
     des::TupleEvent<u32, f64> evt5(
@@ -152,6 +163,8 @@ TEST(Event, tuple) {
     ASSERT_EQ(std::get<0>(evt5.tuple), 10u);
     evt5.set<0>(20u);
     ASSERT_EQ(std::get<0>(evt5.tuple), 20u);
+    evt5.set(0xBEEF, 3.14);
+    ASSERT_EQ(evt5.tuple, exp2);
   }
 }
 
@@ -167,6 +180,7 @@ TEST(Event, empty) {
     ASSERT_EQ(evt0.handler, nullptr);
     ASSERT_FALSE(evt0.time.valid());
     ASSERT_EQ(evt0.tuple, exp);
+    evt0.set();
   }
   {
     des::TupleEvent<> evt2(
@@ -176,6 +190,7 @@ TEST(Event, empty) {
         &MyComponent::ignoreEvent));
     ASSERT_FALSE(evt2.time.valid());
     ASSERT_EQ(evt2.tuple, exp);
+    evt2.set();
   }
   {
     des::TupleEvent<> evt4(
@@ -186,5 +201,6 @@ TEST(Event, empty) {
         &MyComponent::ignoreEvent));
     ASSERT_TRUE(evt4.time == des::Time(123456789, 9));
     ASSERT_EQ(evt4.tuple, exp);
+    evt4.set();
   }
 }

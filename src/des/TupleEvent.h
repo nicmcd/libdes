@@ -79,6 +79,9 @@ class TupleEvent : public Event {
   void set(const typename std::tuple_element<
            Index, std::tuple<Types...> >::type& _v);
 
+  // sets the whole tuple
+  void set(const Types&... _types);
+
   // this is the actual tuple object
   //  most users won't need this
   std::tuple<Types...> tuple;

@@ -88,6 +88,11 @@ void TupleEvent<Types...>::set(const typename std::tuple_element<
   std::get<Index>(tuple) = _v;
 }
 
+template <typename... Types>
+void TupleEvent<Types...>::set(const Types&... _types) {
+  tuple = std::make_tuple(_types...);
+}
+
 }  // namespace des
 
 #endif  // DES_TUPLEEVENT_H_
