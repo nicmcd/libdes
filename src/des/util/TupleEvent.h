@@ -28,8 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_TUPLEEVENT_H_
-#define DES_TUPLEEVENT_H_
+#ifndef DES_UTIL_TUPLEEVENT_H_
+#define DES_UTIL_TUPLEEVENT_H_
 
 #include <tuple>
 
@@ -91,4 +91,4 @@ class TupleEvent : public Event {
 
 #include "TupleEvent.tcc"
 
-#endif  // DES_TUPLEEVENT_H_
+#endif  // DES_UTIL_TUPLEEVENT_H_
