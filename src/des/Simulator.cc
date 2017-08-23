@@ -111,6 +111,7 @@ Simulator::Simulator(u32 _numExecuters)
 }
 
 Simulator::~Simulator() {
+  assert(components_.size() == 0);
   delete[] queueSets_;
 }
 
