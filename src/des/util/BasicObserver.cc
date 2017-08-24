@@ -41,9 +41,8 @@ static const u64 secondFactor = 1000;
 
 namespace des {
 
-BasicObserver::BasicObserver(Logger* _logger, bool _logProgress,
-                             bool _logSummary)
-    : logger_(_logger), logProgress_(_logProgress), logSummary_(_logSummary),
+BasicObserver::BasicObserver(Logger* _logger, bool _logSummary)
+    : logger_(_logger), logSummary_(_logSummary),
       statsString_(nullptr) {
   statsString_ = new char[STATS_SIZE];
 }
@@ -54,33 +53,31 @@ BasicObserver::~BasicObserver() {
 
 void BasicObserver::progressStatistics(
     const Observer::ProgressStatistics& _progressStats) {
-  if (logProgress_) {
-    f64 totalRealTime = _progressStats.seconds;
+  f64 totalRealTime = _progressStats.seconds;
 
-    u64 milliseconds = static_cast<u32>(totalRealTime * 1000);
-    u64 days = milliseconds / dayFactor;
-    milliseconds %= dayFactor;
-    u64 hours = milliseconds / hourFactor;
-    milliseconds %= hourFactor;
-    u64 minutes = milliseconds / minuteFactor;
-    milliseconds %= minuteFactor;
-    u64 seconds = milliseconds / secondFactor;
-    milliseconds %= secondFactor;
+  u64 milliseconds = static_cast<u32>(totalRealTime * 1000);
+  u64 days = milliseconds / dayFactor;
+  milliseconds %= dayFactor;
+  u64 hours = milliseconds / hourFactor;
+  milliseconds %= hourFactor;
+  u64 minutes = milliseconds / minuteFactor;
+  milliseconds %= minuteFactor;
+  u64 seconds = milliseconds / secondFactor;
+  milliseconds %= secondFactor;
 
-    s32 r = snprintf(
-        statsString_, STATS_SIZE,
-        "%lu:%02lu:%02lu:%02lu : "
-        "%lu events : %lu ticks : %.0f events/sec : "
-        "%.0f ticks/sec : %.0f steps/sec\n",
-        days, hours, minutes, seconds,
-        _progressStats.eventCount,
-        _progressStats.ticks,
-        _progressStats.eventsPerSecond,
-        _progressStats.ticksPerSecond,
-        _progressStats.stepsPerSecond);
-    assert(r > 0 && r < (s32)STATS_SIZE);
-    logger_->log(statsString_, r);
-  }
+  s32 r = snprintf(
+      statsString_, STATS_SIZE,
+      "%lu:%02lu:%02lu:%02lu : "
+      "%lu events : %lu ticks : %.0f events/sec : "
+      "%.0f ticks/sec : %.0f steps/sec\n",
+      days, hours, minutes, seconds,
+      _progressStats.eventCount,
+      _progressStats.ticks,
+      _progressStats.eventsPerSecond,
+      _progressStats.ticksPerSecond,
+      _progressStats.stepsPerSecond);
+  assert(r > 0 && r < (s32)STATS_SIZE);
+  logger_->log(statsString_, r);
 }
 
 void BasicObserver::summaryStatistics(

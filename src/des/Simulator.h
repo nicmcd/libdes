@@ -77,8 +77,8 @@ class Simulator {
 
   // observing
   void addObserver(Observer* _observer);
-  void setObservingIntervel(f64 _interval);
-  void setObservingPower(u64 _expPow2Events);
+  void setObservingInterval(f64 _interval);  // F64_NAN = off
+  void setObservingPower(u32 _expPow2Events);
 
   // components and debugging
   void addComponent(Component* _component);
@@ -229,6 +229,7 @@ class Simulator {
 
   // these are for observing simulator performance
   std::vector<Observer*> observers_;
+  bool observeProgress_;
   f64 observingInterval_;
   u64 observingMask_;
 

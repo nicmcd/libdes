@@ -84,7 +84,8 @@ Simulator::Simulator()
     : Simulator(1) {}
 
 Simulator::Simulator(u32 _numExecuters)
-    : numExecuters_(_numExecuters), initialized_(false), mapper_(nullptr) {
+    : numExecuters_(_numExecuters), logger_(nullptr), initialized_(false),
+      mapper_(nullptr) {
   // check inputs
   assert(numExecuters_ > 0);
 
@@ -106,6 +107,7 @@ Simulator::Simulator(u32 _numExecuters)
   stats_.lastTick = 0;
 
   // observer defaults
+  observeProgress_ = false;
   observingInterval_ = 1.0;
   observingMask_ = (1 << 10) - 1;
 }
@@ -141,14 +143,24 @@ Logger* Simulator::getLogger() const {
 
 void Simulator::addObserver(Observer* _observer) {
   observers_.push_back(_observer);
+  if (observingInterval_ != F64_NAN) {
+    observeProgress_ = true;
+  }
 }
 
-void Simulator::setObservingIntervel(f64 _interval) {
+void Simulator::setObservingInterval(f64 _interval) {
+  assert(std::isnan(_interval) || _interval > 0.0);
   observingInterval_ = _interval;
+  if (observingInterval_ == F64_NAN) {
+    observeProgress_ = false;
+  } else if (observers_.size() > 0) {
+    observeProgress_ = true;
+  }
 }
 
-void Simulator::setObservingPower(u64 _expPow2Events) {
-  observingMask_ = 1 << _expPow2Events;
+void Simulator::setObservingPower(u32 _expPow2Events) {
+  assert(_expPow2Events < 64);
+  observingMask_ = 1 << (u64)_expPow2Events;
 }
 
 void Simulator::addComponent(Component* _component) {
@@ -510,7 +522,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
     state_.timeStep = nextTimeStep;
 
     // show progress statistics
-    if (observers_.size() > 0) {
+    if (observeProgress_) {
       // use the event mask to reduce the amount of time retrieving
       if ((stats_.timeStepCount & observingMask_) == 0) {
         // get the time to see if some progress observing is needed

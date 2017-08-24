@@ -38,7 +38,7 @@ namespace des {
 
 class BasicObserver : public Observer {
  public:
-  BasicObserver(Logger* _logger, bool _logProgress, bool _logSummary);
+  BasicObserver(Logger* _logger, bool _logSummary);
   ~BasicObserver();
 
   void progressStatistics(
@@ -48,7 +48,6 @@ class BasicObserver : public Observer {
 
  private:
   Logger* logger_;
-  bool logProgress_;
   bool logSummary_;
   char* statsString_;
 };

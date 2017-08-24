@@ -45,7 +45,8 @@ class Logger {
   Logger();
   // "-" to stdout, "+" to stderr, "*.gz" to gzip file, regular file otherwise
   explicit Logger(const std::string& _filename);
-  virtual ~Logger();
+  ~Logger();
+
   void log(const char* _message, u64 _len);
 
  private:
