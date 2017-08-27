@@ -95,6 +95,7 @@ class Simulator {
   Tick clockPhase(u32 _clockId) const;
   u64 cycle(u32 _clockId) const;
   u64 cycles(u32 _clockId, Time _time) const;
+  bool isCycle(u32 _clockId) const;
   Time futureCycle(u32 _clockId, u32 _cycles) const;
   Time futureCycle(u32 _clockId, u32 _cycles, Epsilon _epsilon) const;
 

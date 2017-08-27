@@ -248,6 +248,13 @@ u64 Simulator::cycles(u32 _clockId, Time _time) const {
   return _time.tick() / clockPeriod(_clockId);
 }
 
+bool Simulator::isCycle(u32 _clockId) const {
+  const std::pair<Tick, Tick>& clock = clocks_.at(_clockId);
+  Tick tick = time().tick();
+  Tick rem = tick % clock.first;
+  return rem == clock.second;
+}
+
 Time Simulator::futureCycle(u32 _clockId, u32 _cycles) const {
   return futureCycle(_clockId, _cycles, 0);
 }

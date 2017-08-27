@@ -360,3 +360,84 @@ TEST(Simulator, futureCycle) {
     sim.simulate();
   }
 }
+
+namespace {
+class CycleCheckComponent : public des::ActiveComponent {
+ public:
+  explicit CycleCheckComponent(des::Simulator* _simulator)
+      : des::ActiveComponent(_simulator, "CycleCheck") {
+    debug = true;
+  }
+
+  void setCheck(des::Time _time, u32 _clockId, bool _expected) const {
+    simulator->addEvent(new Event(
+        self(), makeHandler(CycleCheckComponent, check), _time,
+        _clockId, _expected));
+  }
+
+  void check(des::Event* _event) {
+    Event* event = reinterpret_cast<Event*>(_event);
+
+    bool actual = simulator->isCycle(event->clockId);
+    if (actual != event->expected) {
+      printf("time=%s clock=%u actual=%u expected=%u\n",
+             simulator->time().toString().c_str(), event->clockId,
+             actual, event->expected);
+    }
+    ASSERT_EQ(actual, event->expected);
+
+    delete event;
+  }
+
+ private:
+  class Event : public des::Event {
+   public:
+    Event(des::ActiveComponent* _component, des::EventHandler _handler,
+          des::Time _time, u32 _clockId, bool _expected)
+        : des::Event(_component, _handler, _time),
+          clockId(_clockId), expected(_expected) {}
+    u32 clockId;
+    bool expected;
+  };
+};
+}  // namespace
+
+TEST(Simulator, isCycle) {
+  des::Simulator sim;
+  u32 clock1 = sim.addClock(1000, 0);
+  u32 clock2 = sim.addClock(1500, 500);
+
+  CycleCheckComponent checker(&sim);
+
+  for (des::Epsilon e = 0; e < 4; e++) {
+    checker.setCheck(des::Time(0, e), clock1, true);
+    checker.setCheck(des::Time(0, e), clock2, false);
+
+    checker.setCheck(des::Time(1, e), clock1, false);
+    checker.setCheck(des::Time(1, e), clock2, false);
+
+    checker.setCheck(des::Time(500, e), clock1, false);
+    checker.setCheck(des::Time(500, e), clock2, true);
+
+    checker.setCheck(des::Time(1000, e), clock1, true);
+    checker.setCheck(des::Time(1000, e), clock2, false);
+
+    checker.setCheck(des::Time(1500, e), clock1, false);
+    checker.setCheck(des::Time(1500, e), clock2, false);
+
+    checker.setCheck(des::Time(2000, e), clock1, true);
+    checker.setCheck(des::Time(2000, e), clock2, true);
+
+    checker.setCheck(des::Time(2500, e), clock1, false);
+    checker.setCheck(des::Time(2500, e), clock2, false);
+
+    checker.setCheck(des::Time(3000, e), clock1, true);
+    checker.setCheck(des::Time(3000, e), clock2, false);
+
+    checker.setCheck(des::Time(3500, e), clock1, false);
+    checker.setCheck(des::Time(3500, e), clock2, true);
+  }
+
+  sim.initialize();
+  sim.simulate();
+}
