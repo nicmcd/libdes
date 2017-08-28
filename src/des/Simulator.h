@@ -104,7 +104,6 @@ class Simulator {
   void initialize();
   void simulate();
 
- protected:
   // this is used for subclasses to generate executer specific data structures
   u32 executerId() const;
 

@@ -58,4 +58,8 @@ ActiveComponent* ActiveComponent::self() const {
   return const_cast<ActiveComponent*>(this);
 }
 
+bool ActiveComponent::sameExecuter() const {
+  return executer_ == simulator->executerId();
+}
+
 }  // namespace des

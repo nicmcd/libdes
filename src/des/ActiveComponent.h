@@ -52,7 +52,15 @@ class ActiveComponent : public Component {
   virtual ~ActiveComponent();
 
   u32 executer() const;
+
+ protected:
+  // this returns a pointer to ourself without the const
+  //  this is useful within event creation functions
   ActiveComponent* self() const;
+
+  // this returns true if the calling executer is the same executer as this
+  //  component, false otherwise
+  bool sameExecuter() const;
 
  private:
   u32 executer_;
