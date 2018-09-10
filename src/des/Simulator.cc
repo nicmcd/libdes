@@ -31,6 +31,7 @@
 #include "des/Simulator.h"
 
 #include <cassert>
+#include <cmath>
 #include <cstdio>
 #include <ctime>
 
