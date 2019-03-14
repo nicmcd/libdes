@@ -36,8 +36,8 @@
 #include <ctime>
 
 #include <algorithm>
-#include <ratio>
-#include <thread>
+#include <ratio>  // NOLINT
+#include <thread>  // NOLINT
 #include <utility>
 
 #include "des/ActiveComponent.h"
@@ -82,7 +82,7 @@ static_assert(TIMESTEP_INF != TIMESTEP_INV, "bad TIMESTEP_INF");
 
 
 Simulator::Simulator()
-    : Simulator(1) {}
+    : Simulator(std::thread::hardware_concurrency()) {}
 
 Simulator::Simulator(u32 _numExecuters)
     : numExecuters_(_numExecuters), logger_(nullptr), initialized_(false),

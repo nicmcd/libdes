@@ -34,7 +34,7 @@
 #include <prim/prim.h>
 
 #include <atomic>
-#include <chrono>
+#include <chrono>  // NOLINT
 #include <queue>
 #include <string>
 #include <tuple>

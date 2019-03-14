@@ -46,8 +46,8 @@ class MyComponent : public des::ActiveComponent {
 };
 }  // namespace
 
-TEST(Event, tuple) {
-  des::Simulator sim;
+TEST(TupleEvent, tuple) {
+  des::Simulator sim(1);
   MyComponent component(&sim);
 
   std::tuple<u32, f64> exp(0xDEAFBEEF, 3.14159265359);
@@ -168,8 +168,8 @@ TEST(Event, tuple) {
   }
 }
 
-TEST(Event, empty) {
-  des::Simulator sim;
+TEST(TupleEvent, empty) {
+  des::Simulator sim(1);
   MyComponent component(&sim);
 
   std::tuple<> exp;

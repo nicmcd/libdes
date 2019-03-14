@@ -107,8 +107,7 @@ class Driver : public des::ActiveComponent {
 TEST(Scheduler, basic) {
   std::mt19937 rnd;
 
-
-  des::Simulator sim(10);
+  des::Simulator sim;
   des::RoundRobinMapper mapper;
   sim.setMapper(&mapper);
   des::Logger logger;

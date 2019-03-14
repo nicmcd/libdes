@@ -108,7 +108,7 @@ TEST(Simulator, emptysim) {
   const u64 COMPONENTS = 3;
   const u64 SIMS = 100;
 
-  des::Simulator* sim = new des::Simulator();
+  des::Simulator* sim = new des::Simulator(1);
   std::vector<NullComponent*> components;
   for (u64 id = 0; id < COMPONENTS; id++) {
     components.push_back(new NullComponent(sim, id));
@@ -129,7 +129,7 @@ TEST(Simulator, multisim) {
   const u64 COMPONENTS = 3;
   const u64 SIMS = 100;
 
-  des::Simulator* sim = new des::Simulator();
+  des::Simulator* sim = new des::Simulator(1);
   std::vector<NullComponent*> components;
   for (u64 id = 0; id < COMPONENTS; id++) {
     components.push_back(new NullComponent(sim, id));
@@ -175,7 +175,7 @@ TEST(Simulator, execTime0) {
   const u64 COMPONENTS = 3;
   const u64 SIMS = 100;
 
-  des::Simulator* sim = new des::Simulator();
+  des::Simulator* sim = new des::Simulator(1);
   std::vector<OneAtZero*> components;
   for (u64 id = 0; id < COMPONENTS; id++) {
     components.push_back(new OneAtZero(sim, id));
@@ -318,7 +318,7 @@ u64 slowFutureCycle(des::Tick _now, des::Tick _period, des::Tick _phase,
 TEST(Simulator, futureCycle) {
   const u64 SIMS = 100;
 
-  des::Simulator sim;
+  des::Simulator sim(1);
   u32 clock1 = sim.addClock(1000, 0);
   u32 clock2 = sim.addClock(1500, 500);
   std::vector<u32> clocks({clock1, clock2});
@@ -403,7 +403,7 @@ class CycleCheckComponent : public des::ActiveComponent {
 }  // namespace
 
 TEST(Simulator, isCycle) {
-  des::Simulator sim;
+  des::Simulator sim(1);
   u32 clock1 = sim.addClock(1000, 0);
   u32 clock2 = sim.addClock(1500, 500);
 

@@ -47,7 +47,7 @@ class MyComponent : public des::ActiveComponent {
 }  // namespace
 
 TEST(Event, constructor1) {
-  des::Simulator sim;
+  des::Simulator sim(1);
   MyComponent component(&sim);
   des::Event evt;
   ASSERT_EQ(evt.component, nullptr);
@@ -56,7 +56,7 @@ TEST(Event, constructor1) {
 }
 
 TEST(Event, constructor2) {
-  des::Simulator sim;
+  des::Simulator sim(1);
   MyComponent component(&sim);
   des::Event evt(&component,
                  makeHandler(MyComponent, ignoreEvent));
@@ -67,7 +67,7 @@ TEST(Event, constructor2) {
 }
 
 TEST(Event, constructor3) {
-  des::Simulator sim;
+  des::Simulator sim(1);
   MyComponent component(&sim);
   des::Time etime(123456789, 9);
   des::Event evt(&component,
@@ -80,7 +80,7 @@ TEST(Event, constructor3) {
 }
 
 TEST(Event, constructor3b) {
-  des::Simulator sim;
+  des::Simulator sim(1);
   MyComponent component(&sim);
   des::Event evt(&component,
                  makeHandler(MyComponent, ignoreEvent),

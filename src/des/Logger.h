@@ -34,7 +34,7 @@
 #include <prim/prim.h>
 #include <zlib.h>
 
-#include <mutex>
+#include <mutex>  // NOLINT
 #include <string>
 
 namespace des {

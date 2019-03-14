@@ -28,9 +28,12 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef DES_UTIL_SCHEDULER_TCC_
+#define DES_UTIL_SCHEDULER_TCC_
+
 #ifndef DES_UTIL_SCHEDULER_H_
 #error "Do not include this .tcc file directly, use the .h file instead"
-#else
+#else  // DES_UTIL_SCHEDULER_H_
 
 #include <cassert>
 
@@ -77,3 +80,4 @@ void Scheduler<E>::executed() const {
 }  // namespace des
 
 #endif  // DES_UTIL_SCHEDULER_H_
+#endif  // DES_UTIL_SCHEDULER_TCC_
