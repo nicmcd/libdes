@@ -23,13 +23,13 @@ LINKOPTS = [
 ]
 
 LIBS = [
-  "@libprim//:lib",
-  "@librnd//:lib",
-  "@zlib//:lib",
+  "@libprim//:prim",
+  "@librnd//:rnd",
+  "@zlib//:zlib",
 ]
 
 cc_library(
-  name = "lib",
+  name = "des",
   srcs = glob(
     ["src/**/*.cc"],
     exclude = ["src/**/*_TEST*"],
@@ -62,7 +62,7 @@ cc_library(
   ]),
   copts = COPTS,
   deps = [
-    ":lib",
+    ":des",
     "@googletest//:gtest_main",
   ] + LIBS,
   visibility = ["//visibility:private"],
@@ -70,7 +70,7 @@ cc_library(
 )
 
 cc_test(
-  name = "test",
+  name = "des_test",
   copts = COPTS,
   linkopts = LINKOPTS,
   deps = [
