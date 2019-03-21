@@ -89,7 +89,7 @@ class NullComponent : public des::ActiveComponent {
   }
 
   void ignoreEvent(des::Event* _event) {
-    (void)_event;
+    (void)_event;  // unused
   }
 
   void nextEvent() {
@@ -162,7 +162,7 @@ class OneAtZero : public des::ActiveComponent {
   }
 
   void ignoreEvent(des::Event* _event) {
-    (void)_event;
+    (void)_event;  // unused
   }
 
  private:
@@ -231,7 +231,7 @@ class SubComponent : public des::ActiveComponent {
 
   void handleEvent(des::Event* _event) {
     Event* event = reinterpret_cast<Event*>(_event);
-    (void)event;
+    (void)event;  // unused
 
     count_++;
     // dlogf("count is %u", count_);
@@ -297,7 +297,7 @@ class SetTimeComponent : public des::ActiveComponent {
   }
 
   void ignoreEvent(des::Event* _event) {
-    (void)_event;
+    (void)_event;  // unused
   }
 
  private:

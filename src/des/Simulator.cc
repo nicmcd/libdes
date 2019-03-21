@@ -179,7 +179,6 @@ void Simulator::addComponent(Component* _component) {
   if (toBeDebugged_.count(_component->fullname()) == 1) {
     _component->debug = true;
     u64 res = toBeDebugged_.erase(_component->fullname());
-    (void)res;
     assert(res == 1);
   }
 }
@@ -201,7 +200,6 @@ Component* Simulator::getComponent(const std::string& _fullname) const {
 
 void Simulator::removeComponent(const std::string& _fullname) {
   u64 res = components_.erase(_fullname);
-  (void)res;
   assert(res == 1);
 }
 
@@ -211,7 +209,6 @@ u64 Simulator::numComponents() const {
 
 void Simulator::addDebugName(const std::string& _fullname) {
   bool res = toBeDebugged_.insert(_fullname).second;
-  (void)res;
   assert(res);
 }
 
