@@ -31,7 +31,7 @@
 #ifndef DES_MAPPER_H_
 #define DES_MAPPER_H_
 
-#include <prim/prim.h>
+#include "prim/prim.h"
 
 namespace des {
 

@@ -36,8 +36,8 @@
 
 namespace des {
 
-ActiveComponent::ActiveComponent(
-    Simulator* _simulator, const std::string& _name)
+ActiveComponent::ActiveComponent(Simulator* _simulator,
+                                 const std::string& _name)
     : Component(_simulator, _name), executer_(U32_MAX) {
   simulator->mapComponent(this);
 }

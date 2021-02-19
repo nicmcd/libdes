@@ -30,9 +30,9 @@
  */
 #include "des/Time.h"
 
-#include <gtest/gtest.h>
-
 #include <unordered_set>
+
+#include "gtest/gtest.h"
 
 TEST(Time, constructor1) {
   des::Time t;
@@ -107,7 +107,6 @@ TEST(Time, create) {
   ASSERT_EQ(t.tick(), 0u);
   ASSERT_EQ(t.epsilon(), 0u);
 }
-
 
 TEST(Time, eq) {
   des::Time a;
@@ -590,8 +589,8 @@ TEST(Time, incrEpsilon) {
 TEST(Time, toString) {
   ASSERT_EQ(des::Time(50, 13).toString(), "50:13");
   ASSERT_EQ(des::Time(43).toString(), "43:0");
-  ASSERT_EQ(des::Time().toString(), std::to_string(des::TICK_INV) +
-            ':' + std::to_string(des::EPSILON_INV));
+  ASSERT_EQ(des::Time().toString(), std::to_string(des::TICK_INV) + ':' +
+                                        std::to_string(des::EPSILON_INV));
   ASSERT_EQ(des::Time(199, 2).toString(), "199:2");
 }
 

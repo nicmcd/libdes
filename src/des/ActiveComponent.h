@@ -31,11 +31,11 @@
 #ifndef DES_ACTIVECOMPONENT_H_
 #define DES_ACTIVECOMPONENT_H_
 
-#include <prim/prim.h>
-
+#include <functional>
 #include <string>
 
 #include "des/Component.h"
+#include "prim/prim.h"
 
 namespace des {
 

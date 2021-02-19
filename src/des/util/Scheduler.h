@@ -45,13 +45,12 @@ namespace des {
  *  are able to trigger a future event but if one is already scheduled only the
  *  single event will be created and executed
  */
-template <typename E>
 class Scheduler {
  public:
   Scheduler(ActiveComponent* _component, EventHandler _handler);
-  ~Scheduler();
+  ~Scheduler() = default;
 
-  E* event() const;
+  Event* event() const;
 
   // ensure the event is scheduled
   //  returns true if this call triggered the scheduling
@@ -63,11 +62,10 @@ class Scheduler {
  private:
   // TODO(nic): determine if cacheline padding is needed here.
   mutable std::atomic<u32> counter_;
-  mutable E event_;
+  const Simulator* simulator_;
+  mutable Event event_;
 };
 
 }  // namespace des
-
-#include "des/util/Scheduler.tcc"
 
 #endif  //  DES_UTIL_SCHEDULER_H_

@@ -31,10 +31,8 @@
 #ifndef DES_UTIL_ROUNDROBINMAPPER_H_
 #define DES_UTIL_ROUNDROBINMAPPER_H_
 
-#include <prim/prim.h>
-#include <rnd/Random.h>
-
 #include "des/Mapper.h"
+#include "prim/prim.h"
 
 namespace des {
 

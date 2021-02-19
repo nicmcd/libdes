@@ -30,72 +30,115 @@
  */
 #include "des/Event.h"
 
-#include <gtest/gtest.h>
-
 #include "des/ActiveComponent.h"
 #include "des/Component.h"
 #include "des/Simulator.h"
 #include "des/Time.h"
+#include "gtest/gtest.h"
 
 namespace {
 class MyComponent : public des::ActiveComponent {
  public:
   explicit MyComponent(des::Simulator* _sim)
       : des::ActiveComponent(_sim, "component") {}
-  void ignoreEvent(des::Event*) {}
+  void ignoreEvent() {}
 };
 }  // namespace
 
 TEST(Event, constructor1) {
   des::Simulator sim(1);
   MyComponent component(&sim);
-  des::Event evt;
-  ASSERT_EQ(evt.component, nullptr);
+  des::Event evt(&component);
   ASSERT_EQ(evt.handler, nullptr);
-  ASSERT_TRUE(evt.time ==  des::Time());
+  ASSERT_TRUE(evt.time == des::Time());
+  ASSERT_FALSE(evt.skip);
+  ASSERT_FALSE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
 }
 
 TEST(Event, constructor2) {
   des::Simulator sim(1);
   MyComponent component(&sim);
-  des::Event evt(&component,
-                 makeHandler(MyComponent, ignoreEvent));
-  ASSERT_EQ(evt.component, &component);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
-      &MyComponent::ignoreEvent));
+  des::Event evt(&component, std::bind(&MyComponent::ignoreEvent, &component));
+  ASSERT_NE(evt.handler, nullptr);
   ASSERT_TRUE(evt.time == des::Time());
+  ASSERT_FALSE(evt.skip);
+  ASSERT_FALSE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
 }
 
 TEST(Event, constructor3) {
   des::Simulator sim(1);
   MyComponent component(&sim);
   des::Time etime(123456789, 9);
-  des::Event evt(&component,
-                 makeHandler(MyComponent, ignoreEvent),
+  des::Event evt(&component, std::bind(&MyComponent::ignoreEvent, &component),
                  etime);
-  ASSERT_EQ(evt.component, &component);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
-      &MyComponent::ignoreEvent));
+  ASSERT_NE(evt.handler, nullptr);
   ASSERT_TRUE(evt.time == etime);
+  ASSERT_FALSE(evt.skip);
+  ASSERT_FALSE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
 }
 
 TEST(Event, constructor3b) {
   des::Simulator sim(1);
   MyComponent component(&sim);
-  des::Event evt(&component,
-                 makeHandler(MyComponent, ignoreEvent),
+  des::Event evt(&component, std::bind(&MyComponent::ignoreEvent, &component),
                  des::Time(123456789, 9));
-  ASSERT_EQ(evt.component, &component);
-  ASSERT_EQ(evt.handler, static_cast<des::EventHandler>(
-      &MyComponent::ignoreEvent));
+  ASSERT_NE(evt.handler, nullptr);
   ASSERT_TRUE(evt.time == des::Time(123456789, 9));
+  ASSERT_FALSE(evt.skip);
+  ASSERT_FALSE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
+}
+
+TEST(Event, constructor4) {
+  des::Simulator sim(1);
+  MyComponent component(&sim);
+  des::Time etime(123456789, 9);
+  des::Event evt(&component, std::bind(&MyComponent::ignoreEvent, &component),
+                 etime, true);
+  ASSERT_NE(evt.handler, nullptr);
+  ASSERT_TRUE(evt.time == etime);
+  ASSERT_FALSE(evt.skip);
+  ASSERT_TRUE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
+}
+
+TEST(Event, move) {
+  des::Simulator sim(1);
+  MyComponent component(&sim);
+  des::Event evt(&component);
+  ASSERT_EQ(evt.handler, nullptr);
+  ASSERT_TRUE(evt.time == des::Time());
+  ASSERT_FALSE(evt.skip);
+  ASSERT_FALSE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
+
+  des::Time etime(123456789, 9);
+  evt = des::Event(&component, std::bind(&MyComponent::ignoreEvent, &component),
+                   etime, true);
+  ASSERT_NE(evt.handler, nullptr);
+  ASSERT_TRUE(evt.time == etime);
+  ASSERT_FALSE(evt.skip);
+  ASSERT_TRUE(evt.clean);
+  ASSERT_EQ(evt.executer(), component.executer());
+  ASSERT_FALSE(evt.enqueued());
 }
 
 TEST(Event, eventCompare) {
   des::EventComparator comp;
 
-  des::Event e1;
-  des::Event e2;
+  des::Simulator sim(1);
+  MyComponent component(&sim);
+  des::Event e1(&component);
+  des::Event e2(&component);
 
   e1.time = des::Time(100, 0);
   e2.time = des::Time(99, 1);

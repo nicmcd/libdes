@@ -31,10 +31,9 @@
 #ifndef DES_UTIL_RANDOMMAPPER_H_
 #define DES_UTIL_RANDOMMAPPER_H_
 
-#include <prim/prim.h>
-#include <rnd/Random.h>
-
 #include "des/Mapper.h"
+#include "prim/prim.h"
+#include "rnd/Random.h"
 
 namespace des {
 

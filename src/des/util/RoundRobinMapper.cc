@@ -34,8 +34,7 @@
 
 namespace des {
 
-RoundRobinMapper::RoundRobinMapper()
-    : next_(0) {}
+RoundRobinMapper::RoundRobinMapper() : next_(0) {}
 
 RoundRobinMapper::~RoundRobinMapper() {}
 

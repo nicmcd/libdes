@@ -31,9 +31,9 @@
 #ifndef DES_TIMECONF_H_
 #define DES_TIMECONF_H_
 
-#include <prim/prim.h>
-
 #include <climits>
+
+#include "prim/prim.h"
 
 namespace des {
 

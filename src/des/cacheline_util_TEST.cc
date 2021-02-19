@@ -30,8 +30,8 @@
  */
 #include "des/cacheline_util.h"
 
-#include <gtest/gtest.h>
-#include <prim/prim.h>
+#include "gtest/gtest.h"
+#include "prim/prim.h"
 
 TEST(cacheline_util, CLPAD_Logic) {
   ASSERT_EQ(des::CLPAD(1), des::CACHELINE_SIZE - 1);
@@ -53,7 +53,7 @@ TEST(cacheline_util, CLPAD_Use) {
   for (char& c : aapu64.pad) {
     c = 0;
   }
-  u = 0xCDABCDABCDABCDABllu;;
+  u = 0xCDABCDABCDABCDABllu;
 
   // check
   ASSERT_EQ(aapu64.num, 0xABCDABCDABCDABCDllu);

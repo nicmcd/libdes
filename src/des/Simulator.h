@@ -32,7 +32,6 @@
 #define DES_SIMULATOR_H_
 
 #include <numa.h>
-#include <prim/prim.h>
 
 #include <atomic>
 #include <chrono>  // NOLINT
@@ -44,10 +43,11 @@
 #include <utility>
 #include <vector>
 
-#include "des/cacheline_util.h"
 #include "des/Event.h"
 #include "des/MpScQueue.h"
 #include "des/Time.h"
+#include "des/cacheline_util.h"
+#include "prim/prim.h"
 
 namespace des {
 
@@ -101,8 +101,7 @@ class Simulator {
   Time futureCycle(u32 _clockId, u32 _cycles, Epsilon _epsilon) const;
 
   // events and event handling
-  void addEvent(Event* _event);
-  void initialize();
+  void addEvent(Event* _event) const;
   void simulate();
 
   // this is used for subclasses to generate executer specific data structures
@@ -110,8 +109,8 @@ class Simulator {
 
  private:
   // this defines the type of queue used for events
-  typedef std::priority_queue<Event*, std::vector<Event*>,
-                              EventComparator> EventQueue;
+  typedef std::priority_queue<Event*, std::vector<Event*>, EventComparator>
+      EventQueue;
 
   // this defines a set of event queues for each executer
   //  these are cache line aligned and padded individually
@@ -229,7 +228,6 @@ class Simulator {
   // components and debugging names
   std::unordered_map<std::string, Component*> components_;
   std::unordered_set<std::string> toBeDebugged_;
-  bool initialized_;
 
   // component to executer mapping
   Mapper* mapper_;

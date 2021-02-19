@@ -31,13 +31,13 @@
 #ifndef DES_OBSERVER_H_
 #define DES_OBSERVER_H_
 
-#include <prim/prim.h>
+#include "prim/prim.h"
 
 namespace des {
 
 class Observer {
  public:
-    // this struct contains the variables passed for progress statistics
+  // this struct contains the variables passed for progress statistics
   struct ProgressStatistics {
     f64 seconds;
     u64 eventCount;

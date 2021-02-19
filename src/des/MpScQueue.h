@@ -33,8 +33,8 @@
 
 #include <atomic>
 
-#include "des/cacheline_util.h"
 #include "des/Event.h"
+#include "des/cacheline_util.h"
 
 namespace des {
 

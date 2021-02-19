@@ -37,7 +37,7 @@ namespace des {
 MpScQueue::MpScQueue() {
   // use the first dummy as the head
   epoch_ = false;
-  dummies_[epoch_].next.store(nullptr, std::memory_order_release);
+  dummies_[epoch_].next_.store(nullptr, std::memory_order_release);
 
   // set the tail to the head
   tail_.store(&dummies_[epoch_], std::memory_order_release);
@@ -48,35 +48,35 @@ MpScQueue::MpScQueue() {
 
 MpScQueue::~MpScQueue() {
   // make sure everything looks good
-  assert(dummies_[epoch_].next == nullptr);
+  assert(dummies_[epoch_].next_ == nullptr);
   assert(nextPop_ == nullptr);
   assert(tail_ == &dummies_[epoch_]);
 }
 
 void MpScQueue::push(Event* _event) {
   // have this event point to null
-  _event->next.store(nullptr, std::memory_order_release);
+  _event->next_.store(nullptr, std::memory_order_release);
 
   // set this event as the tail
   Event* oldTail = tail_.exchange(_event, std::memory_order_acquire);
 
   // point the old tail to the new tail
-  assert(oldTail->next == nullptr);
-  oldTail->next.store(_event, std::memory_order_release);
+  assert(oldTail->next_ == nullptr);
+  oldTail->next_.store(_event, std::memory_order_release);
 }
 
 Event* MpScQueue::pop() {
   if (nextPop_ == nullptr) {
     // check if the list is empty
-    Event* retEvent = dummies_[epoch_].next.load(std::memory_order_acquire);
+    Event* retEvent = dummies_[epoch_].next_.load(std::memory_order_acquire);
     if (retEvent != nullptr) {
       // insert the other dummy into the tail
       push(&dummies_[!epoch_]);
 
       // wait until retEvent points to something
-      while (!(nextPop_ = retEvent->next.load(std::memory_order_acquire))) {
+      while (!(nextPop_ = retEvent->next_.load(std::memory_order_acquire))) {
         // make this spin-wait more efficient
-        asm volatile("pause\n": : :"memory");
+        asm volatile("pause\n" : : : "memory");
       }
       assert(nextPop_ != nullptr);
 
@@ -98,9 +98,9 @@ Event* MpScQueue::pop() {
 
     // wait until the event points to something
     Event* next;
-    while (!(next = nextPop_->next.load(std::memory_order_acquire))) {
+    while (!(next = nextPop_->next_.load(std::memory_order_acquire))) {
       // make this spin-wait more efficient
-      asm volatile("pause\n": : :"memory");
+      asm volatile("pause\n" : : : "memory");
     }
 
     // if nextPop_ is now the dummy, then the end of the poppable list has

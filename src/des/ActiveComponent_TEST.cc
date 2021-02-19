@@ -30,10 +30,9 @@
  */
 #include "des/ActiveComponent.h"
 
-#include <gtest/gtest.h>
-
 #include "des/Mapper.h"
 #include "des/Simulator.h"
+#include "gtest/gtest.h"
 
 class TestMapper : public des::Mapper {
  public:
@@ -55,19 +54,14 @@ class TestComponent : public des::ActiveComponent {
       : des::ActiveComponent(_simulator, _name) {}
   ~TestComponent() {}
 
-  bool checkSameExecutor(bool _expected) const {
-    return _expected == sameExecuter();
-  }
-
   void sameCheck(des::Time _time) const {
+    TestComponent* comp = const_cast<TestComponent*>(this);
     simulator->addEvent(new des::Event(
-        self(), makeHandler(TestComponent, processSameCheck),
-        _time));
+        self(), std::bind(&TestComponent::checkSame, comp), _time, true));
   }
 
- private:
-  void processSameCheck(des::Event* _event) {
-    delete _event;
+ public:
+  void checkSame() {
     ASSERT_TRUE(sameExecuter());
   }
 };
@@ -101,7 +95,6 @@ TEST(ActiveComponent, executer) {
     comps.at(c)->sameCheck(des::Time(123, 2));
   }
 
-  sim->initialize();
   sim->simulate();
 
   // delete components

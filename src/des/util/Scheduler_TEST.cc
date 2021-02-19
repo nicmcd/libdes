@@ -30,8 +30,6 @@
  */
 #include "des/util/Scheduler.h"
 
-#include <gtest/gtest.h>
-
 #include <random>
 #include <string>
 #include <unordered_set>
@@ -43,6 +41,7 @@
 #include "des/Simulator.h"
 #include "des/Time.h"
 #include "des/util/RoundRobinMapper.h"
+#include "gtest/gtest.h"
 
 namespace {
 class Scheduled : public des::ActiveComponent {
@@ -50,7 +49,7 @@ class Scheduled : public des::ActiveComponent {
   Scheduled(des::Simulator* _sim, const std::string& _name,
             std::unordered_set<des::Time>* _exeTimes)
       : des::ActiveComponent(_sim, _name),
-        scheduler_(this, makeHandler(Scheduled, processRequests)),
+        scheduler_(this, std::bind(&Scheduled::processRequests, this)),
         exeTimes_(_exeTimes) {
     debug = false;
   }
@@ -60,11 +59,9 @@ class Scheduled : public des::ActiveComponent {
     scheduler_.schedule(simulator->time().nextEpsilon());
   }
 
-  void processRequests(des::Event* _event) {
+  void processRequests() {
     dlogf("processing");
     scheduler_.executed();
-
-    (void)_event;  // unused
 
     // make sure future only
     if (lastTime_.valid()) {
@@ -79,26 +76,25 @@ class Scheduled : public des::ActiveComponent {
   }
 
  private:
-  des::Scheduler<des::Event> scheduler_;
+  des::Scheduler scheduler_;
   des::Time lastTime_;
   std::unordered_set<des::Time>* exeTimes_;
 };
 
 class Driver : public des::ActiveComponent {
  public:
-  Driver(des::Simulator* _sim, const std::string& _name,
-         Scheduled* _scheduled)
+  Driver(des::Simulator* _sim, const std::string& _name, Scheduled* _scheduled)
       : des::ActiveComponent(_sim, _name), scheduled_(_scheduled) {}
 
   void createRequest(des::Time _time) const {
     simulator->addEvent(new des::Event(
-        self(), makeHandler(Driver, performRequest), _time));
+        self(), std::bind(&Driver::performRequest, const_cast<Driver*>(this)),
+        _time, true));
   }
 
  private:
-  void performRequest(des::Event* _event) {
+  void performRequest() {
     scheduled_->request();
-    delete _event;
   }
 
   Scheduled* scheduled_;
@@ -130,7 +126,6 @@ TEST(Scheduler, basic) {
     }
   }
 
-  sim.initialize();
   sim.simulate();
 
   ASSERT_EQ(exeTimes.size(), 0u);

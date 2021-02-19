@@ -31,11 +31,11 @@
 #ifndef DES_LOGGER_H_
 #define DES_LOGGER_H_
 
-#include <prim/prim.h>
-#include <zlib.h>
-
 #include <mutex>  // NOLINT
 #include <string>
+
+#include "prim/prim.h"
+#include "zlib/zlib.h"
 
 namespace des {
 

@@ -30,23 +30,79 @@
  */
 #include "des/Event.h"
 
-#include <prim/prim.h>
+#include <cassert>
 
 #include "des/ActiveComponent.h"
 #include "des/Time.h"
+#include "prim/prim.h"
 
 namespace des {
 
 Event::Event()
-    : component(nullptr), handler(nullptr), time(), next(nullptr) {}
+    : handler(nullptr),
+      time(),
+      skip(false),
+      clean(false),
+      enqueued_(false),
+      executer_(U32_MAX),
+      next_(nullptr) {}
+
+Event::Event(ActiveComponent* _component)
+    : handler(nullptr),
+      time(),
+      skip(false),
+      clean(false),
+      enqueued_(false),
+      executer_(_component->executer()),
+      next_(nullptr) {}
 
 Event::Event(ActiveComponent* _component, EventHandler _handler)
-    : component(_component), handler(_handler), time(), next(nullptr) {}
+    : handler(_handler),
+      time(),
+      skip(false),
+      clean(false),
+      enqueued_(false),
+      executer_(_component->executer()),
+      next_(nullptr) {}
 
 Event::Event(ActiveComponent* _component, EventHandler _handler, Time _time)
-    : component(_component), handler(_handler), time(_time), next(nullptr) {}
+    : handler(_handler),
+      time(_time),
+      skip(false),
+      clean(false),
+      enqueued_(false),
+      executer_(_component->executer()),
+      next_(nullptr) {}
 
-Event::~Event() {}
+Event::Event(ActiveComponent* _component, EventHandler _handler, Time _time,
+             bool _clean)
+    : handler(_handler),
+      time(_time),
+      skip(false),
+      clean(_clean),
+      enqueued_(false),
+      executer_(_component->executer()),
+      next_(nullptr) {}
+
+Event& Event::operator=(const Event& _event) {
+  assert(!_event.enqueued_);
+  handler = _event.handler;
+  time = _event.time;
+  skip = _event.skip;
+  clean = _event.clean;
+  enqueued_ = false;
+  executer_ = _event.executer_;
+  next_.store(nullptr, std::memory_order_release);
+  return *this;
+}
+
+u32 Event::executer() const {
+  return executer_;
+}
+
+bool Event::enqueued() const {
+  return enqueued_;
+}
 
 bool EventComparator::operator()(const Event* _lhs, const Event* _rhs) const {
   return _lhs->time > _rhs->time;

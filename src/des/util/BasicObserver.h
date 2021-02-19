@@ -31,8 +31,8 @@
 #ifndef DES_UTIL_BASICOBSERVER_H_
 #define DES_UTIL_BASICOBSERVER_H_
 
-#include "des/Observer.h"
 #include "des/Logger.h"
+#include "des/Observer.h"
 
 namespace des {
 

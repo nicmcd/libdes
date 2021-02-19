@@ -31,11 +31,10 @@
 #ifndef DES_COMPONENT_H_
 #define DES_COMPONENT_H_
 
-#include <prim/prim.h>
-
 #include <string>
 
 #include "des/Time.h"
+#include "prim/prim.h"
 
 namespace des {
 
@@ -44,23 +43,26 @@ class Simulator;
 
 class Component {
  public:
-  // this constructor is for a top level component
+  // This constructs a top level component.
   Component(Simulator* _simulator, const std::string& _name);
 
-  // this constructor is for a child component
+  // This constructs a child component.
   Component(const std::string& _name, const Component* _parent);
 
   virtual ~Component();
 
-  // this is called after ALL components have been created and BEFORE
-  //  simulation has begun
+  // This is called after all components have been created and before
+  //  simulation has begun.
   virtual void initialize();
+
+  // This is called after simulation has completed.
+  virtual void finalize();
 
   const std::string& basename() const;
   std::string fullname() const;
   const Component* parent() const;
 
-  mutable Simulator* simulator;  // mutable to call addEvent
+  Simulator* simulator;  // mutable to call addEvent
   bool debug;
 
  private:
@@ -76,14 +78,11 @@ class Component {
 s32 debuglogf(Logger* _logger, const char* _func, s32 _line, const char* _name,
               const Time& _time, const char* _format, ...);
 
-#define dlogf(...) (                                                    \
-    ((debug) && (simulator->getLogger())) ?                             \
-    (des::debuglogf(simulator->getLogger(),                             \
-                    __func__,                                           \
-                    __LINE__,                                           \
-                    fullname().c_str(),                                 \
-                    simulator->time(),                                  \
-                    __VA_ARGS__)) : (0))
+#define dlogf(...)                                                            \
+  (((debug) && (simulator->getLogger()))                                      \
+       ? (des::debuglogf(simulator->getLogger(), __func__, __LINE__,          \
+                         fullname().c_str(), simulator->time(), __VA_ARGS__)) \
+       : (0))
 #else  // NDEBUGLOG
 
 #define dlogf(...)

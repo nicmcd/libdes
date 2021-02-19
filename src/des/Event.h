@@ -32,6 +32,7 @@
 #define DES_EVENT_H_
 
 #include <atomic>
+#include <functional>
 
 #include "des/Time.h"
 
@@ -39,27 +40,37 @@ namespace des {
 
 class ActiveComponent;
 
-// This defines an event handler function pointer.
-class Event;
-typedef void (ActiveComponent::*EventHandler)(Event*);
+using EventHandler = std::function<void()>;
 
-// This define create an easy way to cast a class method into an EventHandler
-#define makeHandler(X, Y) (static_cast<des::EventHandler>(&X::Y))
-
-// This is the base class for all events.
 class Event {
- public:
+ private:
   Event();
+
+ public:
+  explicit Event(ActiveComponent* _component);
   Event(ActiveComponent* _component, EventHandler _handler);
   Event(ActiveComponent* _component, EventHandler _handler, Time _time);
-  virtual ~Event();
+  Event(ActiveComponent* _component, EventHandler _handler, Time _time,
+        bool _clean);
+  // Event(Event&& _event) = default;
+  ~Event() = default;
+  Event& operator=(const Event& _event);
 
-  ActiveComponent* component;
+  u32 executer() const;
+  bool enqueued() const;
+
   EventHandler handler;
   Time time;
+  bool skip;
+  bool clean;
 
-  // DO NOT USE. This is only used by the simulation core
-  std::atomic<Event*> next;
+ private:
+  bool enqueued_;
+  u32 executer_;
+  std::atomic<Event*> next_;
+
+  friend class Simulator;  // for access to enqueued_, executer_
+  friend class MpScQueue;  // for access to private constructor, next_
 };
 
 // This defines a comparator object for comparing events.

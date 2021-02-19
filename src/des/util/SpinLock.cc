@@ -32,11 +32,9 @@
 
 namespace des {
 
-SpinLock::SpinLock()
-    : lock_(false) {}
+SpinLock::SpinLock() : lock_(false) {}
 
-SpinLock::SpinLock(const SpinLock& _o)
-    : lock_(false) {
+SpinLock::SpinLock(const SpinLock& _o) : lock_(false) {
   (void)_o;  // unused
 }
 
@@ -47,7 +45,7 @@ void SpinLock::lock() {
     // speculative status
     while (lock_.load()) {
       // make this spin-wait more efficient
-      asm volatile("pause\n": : :"memory");
+      asm volatile("pause\n" : : : "memory");
     }
   } while (lock_.exchange(true, std::memory_order_acquire));
 }

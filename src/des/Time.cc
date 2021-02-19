@@ -31,16 +31,13 @@
 #include "des/Time.h"
 
 #include <cassert>
-
 #include <sstream>
 
 namespace des {
 
-Time::Time()
-    : timeStep_(~0) {}
+Time::Time() : timeStep_(~0) {}
 
-Time::Time(Tick _tick)
-    : Time(_tick, 0) {}
+Time::Time(Tick _tick) : Time(_tick, 0) {}
 
 Time::Time(Tick _tick, Epsilon _epsilon) {
   assert(_tick <= TICK_INV);
@@ -49,8 +46,7 @@ Time::Time(Tick _tick, Epsilon _epsilon) {
   timeStep_ |= _epsilon;
 }
 
-Time::Time(const Time& _o)
-    : timeStep_(_o.timeStep_) {}
+Time::Time(const Time& _o) : timeStep_(_o.timeStep_) {}
 
 Time& Time::operator=(const Time& _o) {
   timeStep_ = _o.timeStep_;

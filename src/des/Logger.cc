@@ -34,8 +34,7 @@
 
 namespace des {
 
-Logger::Logger()
-    : Logger("-") {}
+Logger::Logger() : Logger("-") {}
 
 Logger::Logger(const std::string& _filename) {
   if (_filename == "-") {

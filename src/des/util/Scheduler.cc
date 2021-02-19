@@ -28,34 +28,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef DES_UTIL_SCHEDULER_TCC_
-#define DES_UTIL_SCHEDULER_TCC_
-
-#ifndef DES_UTIL_SCHEDULER_H_
-#error "Do not include this .tcc file directly, use the .h file instead"
-#else  // DES_UTIL_SCHEDULER_H_
+#include "des/util/Scheduler.h"
 
 #include <cassert>
 
 namespace des {
 
-template <typename E>
-Scheduler<E>::Scheduler(
-    ActiveComponent* _component, EventHandler _handler)
-    : event_(_component, _handler) {
+Scheduler::Scheduler(ActiveComponent* _component, EventHandler _handler)
+    : simulator_(_component->simulator), event_(_component, _handler) {
   counter_.store(0, std::memory_order_release);
 }
 
-template <typename E>
-Scheduler<E>::~Scheduler() {}
-
-template <typename E>
-E* Scheduler<E>::event() const {
+Event* Scheduler::event() const {
   return &event_;
 }
 
-template <typename E>
-bool Scheduler<E>::schedule(Time _time) const {
+bool Scheduler::schedule(Time _time) const {
   assert(_time.valid());
 
   // do a fetch-n-add to ensure the event is scheduled
@@ -65,19 +53,15 @@ bool Scheduler<E>::schedule(Time _time) const {
     event_.time = _time;
 
     // schedule the event
-    event_.component->simulator->addEvent(&event_);
+    simulator_->addEvent(&event_);
 
     return true;
   }
   return false;
 }
 
-template <typename E>
-void Scheduler<E>::executed() const {
+void Scheduler::executed() const {
   counter_.store(0, std::memory_order_release);
 }
 
 }  // namespace des
-
-#endif  // DES_UTIL_SCHEDULER_H_
-#endif  // DES_UTIL_SCHEDULER_TCC_

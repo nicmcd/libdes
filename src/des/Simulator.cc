@@ -30,19 +30,18 @@
  */
 #include "des/Simulator.h"
 
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
-
-#include <algorithm>
-#include <ratio>  // NOLINT
+#include <ratio>   // NOLINT
 #include <thread>  // NOLINT
 #include <utility>
 
 #include "des/ActiveComponent.h"
-#include "des/Event.h"
 #include "des/Component.h"
+#include "des/Event.h"
 #include "des/Mapper.h"
 #include "des/Observer.h"
 
@@ -71,11 +70,8 @@ struct alignas(CACHELINE_SIZE) ExecuterState {
   std::vector<Simulator::MinTime*> minTimeArrays;
 
   // ensure no contention across threads
-  char padding4[CLPAD(sizeof(id) +
-                      sizeof(currTimeStep) +
-                      sizeof(minTimeStep) +
-                      sizeof(epoch) +
-                      sizeof(minTimeArrays))];
+  char padding4[CLPAD(sizeof(id) + sizeof(currTimeStep) + sizeof(minTimeStep) +
+                      sizeof(epoch) + sizeof(minTimeArrays))];
 };
 
 // this creates a thread local version of ExecuterState for each executer
@@ -88,13 +84,10 @@ static thread_local ExecuterState exeState;
 static const u64 TIMESTEP_INF = TICK_INV << EPSILON_BITS;
 static_assert(TIMESTEP_INF != TIMESTEP_INV, "bad TIMESTEP_INF");
 
-
-Simulator::Simulator()
-    : Simulator(std::thread::hardware_concurrency()) {}
+Simulator::Simulator() : Simulator(std::thread::hardware_concurrency()) {}
 
 Simulator::Simulator(u32 _numExecuters)
-    : numExecuters_(_numExecuters), logger_(nullptr), initialized_(false),
-      mapper_(nullptr) {
+    : numExecuters_(_numExecuters), logger_(nullptr), mapper_(nullptr) {
   // check inputs
   assert(numExecuters_ > 0);
 
@@ -156,7 +149,6 @@ void Simulator::addObserver(Observer* _observer) {
   observers_.push_back(_observer);
   if (!std::isnan(observingInterval_)) {
     observeProgress_ = true;
-    printf("turned on\n");
   }
 }
 
@@ -165,14 +157,8 @@ void Simulator::setObservingInterval(f64 _interval) {
   observingInterval_ = _interval;
   if (std::isnan(observingInterval_)) {
     observeProgress_ = false;
-    printf("turned off\n");
   } else {
     observeProgress_ = observers_.size() > 0;
-    if (observeProgress_) {
-      printf("turned on\n");
-    } else {
-      printf("turned off\n");
-    }
   }
 }
 
@@ -182,11 +168,9 @@ void Simulator::setObservingPower(u32 _expPow2Events) {
 }
 
 void Simulator::addComponent(Component* _component) {
-  assert(!initialized_);
-
   // duplicate name detection
-  if (!components_.insert(std::make_pair(_component->fullname(),
-                                         _component)).second) {
+  if (!components_.insert(std::make_pair(_component->fullname(), _component))
+           .second) {
     fprintf(stderr, "duplicate component name detected: %s\n",
             _component->fullname().c_str());
     assert(false);
@@ -289,8 +273,9 @@ Time Simulator::futureCycle(u32 _clockId, u32 _cycles, Epsilon _epsilon) const {
   return Time(tick + (clock.first * _cycles), _epsilon);
 }
 
-void Simulator::addEvent(Event* _event) {
+void Simulator::addEvent(Event* _event) const {
   assert(_event->time.valid());
+  _event->enqueued_ = true;
   TimeStep eventTimeStep = _event->time.raw();
 
   // verify event time is in the future
@@ -299,7 +284,7 @@ void Simulator::addEvent(Event* _event) {
   }
 
   // push the event into the queue
-  u32 id = _event->component->executer_;
+  u32 id = _event->executer_;
   if (id != exeState.id) {
     // this event is crossing executers, put it into the oqueue
     MpScQueue& oqueue = queueSets_[id].oqueue;
@@ -314,19 +299,15 @@ void Simulator::addEvent(Event* _event) {
   exeState.minTimeStep = std::min(exeState.minTimeStep, eventTimeStep);
 }
 
-void Simulator::initialize() {
-  assert(!initialized_);
-  for (std::pair<std::string, Component*> comp : components_) {
-    comp.second->initialize();
-  }
-  initialized_ = true;
-}
-
 void Simulator::simulate() {
-  assert(initialized_);
+  assert(!running_);
+
+  // Initializes all components.
+  for (auto& [name, component] : components_) {
+    component->initialize();
+  }
 
   // set running to true
-  assert(!running_);
   running_ = true;
 
   // find the first time to simulate
@@ -365,8 +346,8 @@ void Simulator::simulate() {
     // create threads for executers and run
     std::vector<std::thread> threads;
     for (u32 id = 0; id < numExecuters_; id++) {
-      threads.push_back(std::thread(&Simulator::executer, this,
-                                    id, &minTimeArrays));
+      threads.push_back(
+          std::thread(&Simulator::executer, this, id, &minTimeArrays));
     }
 
     // track the amount of time in simulation
@@ -383,7 +364,6 @@ void Simulator::simulate() {
     for (Simulator::MinTime* array : minTimeArrays) {
       assert(array);
       numa_free(array, slots * sizeof(Simulator::MinTime));
-      // delete[] array;
     }
   }
 
@@ -403,13 +383,18 @@ void Simulator::simulate() {
     std::chrono::steady_clock::time_point realTime =
         std::chrono::steady_clock::now();
     std::chrono::duration<f64> totalElapsedRealTime =
-        std::chrono::duration_cast<std::chrono::duration<f64>>(
-            realTime - startTime);
+        std::chrono::duration_cast<std::chrono::duration<f64>>(realTime -
+                                                               startTime);
     stats.seconds = totalElapsedRealTime.count();
 
     for (Observer* observer : observers_) {
       observer->summaryStatistics(stats);
     }
+  }
+
+  // Finalizes all components.
+  for (auto& [name, component] : components_) {
+    component->finalize();
   }
 }
 
@@ -417,8 +402,8 @@ u32 Simulator::executerId() const {
   return exeState.id;
 }
 
-void Simulator::executer(
-    u32 _id, std::vector<Simulator::MinTime*>* _minTimeArrays) {
+void Simulator::executer(u32 _id,
+                         std::vector<Simulator::MinTime*>* _minTimeArrays) {
   // init the barrier for this executer
   barrierExecuterInit(_id, _minTimeArrays);
 
@@ -466,11 +451,16 @@ void Simulator::executer(
         break;
       }
 
-      // execute the event
-      ActiveComponent* component = event->component;
-      EventHandler handler = event->handler;
-      (component->*handler)(event);
-      executed++;
+      // Executes the event if not marked with skip.
+      // Marks the event as not enqueued and optionally deletes it.
+      if (!event->skip) {
+        event->handler();
+        executed++;
+      }
+      event->enqueued_ = false;
+      if (event->clean) {
+        delete event;
+      }
     }
 
     // take the minimum of the new minimum and queue minimum
@@ -548,7 +538,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
 
   if (numExecuters_ > 1) {
     for (u32 iter = 0; iter < barrierIterations_; iter++) {
-      u32 dist = 1 << iter;  // pow(2, iter)
+      u32 dist = 1 << iter;                     // pow(2, iter)
       u32 peer = (_id + dist) % numExecuters_;  // TODO(nic): remove divide
       assert(peer != _id);
 
@@ -564,7 +554,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
       // wait for this minTimeStep to not be TIMESTEP_INV
       TimeStep minTimeStepOther;
       while ((minTimeStepOther = thisArray[index].minTimeStep.load(
-                 std::memory_order_acquire)) == TIMESTEP_INV) {}
+                  std::memory_order_acquire)) == TIMESTEP_INV) {}
 
       // set minTimeStep back to TIMESTEP_INV
       thisArray[index].minTimeStep.store(TIMESTEP_INV,
@@ -603,8 +593,8 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
           printf("time=%s tick=%lu\n", cTime.toString().c_str(), tick);
           u64 eventCount = stats_.eventCount.load(std::memory_order_acquire);
           u64 intervalEventCount = eventCount - stats_.lastEventCount;
-          u64 intervalTimeStepCount = stats_.timeStepCount -
-              stats_.lastTimeStepCount;
+          u64 intervalTimeStepCount =
+              stats_.timeStepCount - stats_.lastTimeStepCount;
           Tick intervalTick = tick - stats_.lastTick;
           std::chrono::duration<f64> totalRealTime =
               std::chrono::duration_cast<std::chrono::duration<f64>>(

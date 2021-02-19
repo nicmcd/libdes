@@ -31,11 +31,10 @@
 #ifndef DES_TIME_H_
 #define DES_TIME_H_
 
-#include <prim/prim.h>
-
 #include <string>
 
 #include "des/timeconf.h"
+#include "prim/prim.h"
 
 namespace des {
 

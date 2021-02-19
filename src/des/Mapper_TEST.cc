@@ -30,11 +30,10 @@
  */
 #include "des/Mapper.h"
 
-#include <gtest/gtest.h>
-#include <prim/prim.h>
-
 #include "des/ActiveComponent.h"
 #include "des/Simulator.h"
+#include "gtest/gtest.h"
+#include "prim/prim.h"
 
 namespace {
 class TestMapper : public des::Mapper {

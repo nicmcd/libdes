@@ -34,13 +34,11 @@
 
 namespace des {
 
-RandomMapper::RandomMapper(rnd::Random* _random)
-    : random_(_random) {}
+RandomMapper::RandomMapper(rnd::Random* _random) : random_(_random) {}
 
 RandomMapper::~RandomMapper() {}
 
-u32 RandomMapper::map(u32 _numExecuters,
-                      const ActiveComponent* _component) {
+u32 RandomMapper::map(u32 _numExecuters, const ActiveComponent* _component) {
   (void)_component;  // unused
   return random_->nextU64(0, _numExecuters - 1);
 }

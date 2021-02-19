@@ -42,8 +42,7 @@ static const u64 secondFactor = 1000;
 namespace des {
 
 BasicObserver::BasicObserver(Logger* _logger, bool _logSummary)
-    : logger_(_logger), logSummary_(_logSummary),
-      statsString_(nullptr) {
+    : logger_(_logger), logSummary_(_logSummary), statsString_(nullptr) {
   statsString_ = new char[STATS_SIZE];
 }
 
@@ -65,17 +64,14 @@ void BasicObserver::progressStatistics(
   u64 seconds = milliseconds / secondFactor;
   milliseconds %= secondFactor;
 
-  s32 r = snprintf(
-      statsString_, STATS_SIZE,
-      "%lu:%02lu:%02lu:%02lu : "
-      "%lu events : %lu ticks : %.0f events/sec : "
-      "%.0f ticks/sec : %.0f steps/sec\n",
-      days, hours, minutes, seconds,
-      _progressStats.eventCount,
-      _progressStats.ticks,
-      _progressStats.eventsPerSecond,
-      _progressStats.ticksPerSecond,
-      _progressStats.stepsPerSecond);
+  s32 r =
+      snprintf(statsString_, STATS_SIZE,
+               "%lu:%02lu:%02lu:%02lu : "
+               "%lu events : %lu ticks : %.0f events/sec : "
+               "%.0f ticks/sec : %.0f steps/sec\n",
+               days, hours, minutes, seconds, _progressStats.eventCount,
+               _progressStats.ticks, _progressStats.eventsPerSecond,
+               _progressStats.ticksPerSecond, _progressStats.stepsPerSecond);
   assert(r > 0 && r < (s32)STATS_SIZE);
   logger_->log(statsString_, r);
 }
@@ -91,25 +87,20 @@ void BasicObserver::summaryStatistics(
     f64 ticksPerSecond = _summaryStats.ticks / _summaryStats.seconds;
     f64 stepsPerSecond = _summaryStats.timeSteps / _summaryStats.seconds;
 
-    s32 r = snprintf(
-        statsString_, STATS_SIZE,
-        "\n"
-        "Total event count:     %lu\n"
-        "Total time steps:      %lu\n"
-        "Total seconds:         %.3f\n"
-        "\n"
-        "Events per second:     %.3f\n"
-        "Events per sim tick:   %.3f\n"
-        "Sim ticks per second:  %.3f\n"
-        "Time steps per second: %.3f\n"
-        "\n",
-        _summaryStats.eventCount,
-        _summaryStats.timeSteps,
-        _summaryStats.seconds,
-        eventsPerSecond,
-        eventsPerTick,
-        ticksPerSecond,
-        stepsPerSecond);
+    s32 r = snprintf(statsString_, STATS_SIZE,
+                     "\n"
+                     "Total event count:     %lu\n"
+                     "Total time steps:      %lu\n"
+                     "Total seconds:         %.3f\n"
+                     "\n"
+                     "Events per second:     %.3f\n"
+                     "Events per sim tick:   %.3f\n"
+                     "Sim ticks per second:  %.3f\n"
+                     "Time steps per second: %.3f\n"
+                     "\n",
+                     _summaryStats.eventCount, _summaryStats.timeSteps,
+                     _summaryStats.seconds, eventsPerSecond, eventsPerTick,
+                     ticksPerSecond, stepsPerSecond);
     assert(r > 0 && r < (s32)STATS_SIZE);
     logger_->log(statsString_, r);
   }
