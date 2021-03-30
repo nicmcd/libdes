@@ -501,8 +501,6 @@ void Simulator::barrierExecuterInit(
   void* buff = numa_alloc_local(slots * sizeof(Simulator::MinTime));
   assert(buff != NULL);
   Simulator::MinTime* minTimeArray = static_cast<Simulator::MinTime*>(buff);
-  // Simulator::MinTime* minTimeArray = new Simulator::MinTime[slots];
-  // printf("MinTime array size: %u\n", sizeof(minTimeArray));
   for (u32 mt = 0; mt < slots; mt++) {
     minTimeArray[mt].minTimeStep.store(TIMESTEP_INV, std::memory_order_release);
   }
@@ -590,7 +588,6 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
           // gather and compute all needed statistics
           Time cTime = Time::create(exeState.currTimeStep);
           Tick tick = cTime.tick();
-          printf("time=%s tick=%lu\n", cTime.toString().c_str(), tick);
           u64 eventCount = stats_.eventCount.load(std::memory_order_acquire);
           u64 intervalEventCount = eventCount - stats_.lastEventCount;
           u64 intervalTimeStepCount =
