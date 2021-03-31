@@ -412,8 +412,7 @@ struct UseRandomComponent : public des::ActiveComponent {
   rnd::Random* sim_random;
   std::vector<u64> values;
 
-  UseRandomComponent(des::Simulator* _simulator, const std::string& _name,
-                     u32 /*_id*/)
+  UseRandomComponent(des::Simulator* _simulator, const std::string& _name)
       : des::ActiveComponent(_simulator, _name) {}
 
   void generateEvents(u32 _num_events) {
@@ -445,7 +444,7 @@ TEST(Simulator, random) {
   sim.setMapper(&mapper);
   std::vector<UseRandomComponent*> components(executers, nullptr);
   for (u32 c = 0; c < components.size(); c++) {
-    components.at(c) = new UseRandomComponent(&sim, std::to_string(c), c);
+    components.at(c) = new UseRandomComponent(&sim, std::to_string(c));
   }
 
   // Runs one simulation to set the baseline values.
