@@ -31,16 +31,17 @@
 #include "des/util/RandomMapper.h"
 
 #include "des/ActiveComponent.h"
+#include "des/Simulator.h"
+#include "rnd/Random.h"
 
 namespace des {
 
-RandomMapper::RandomMapper(rnd::Random* _random) : random_(_random) {}
+RandomMapper::RandomMapper() {}
 
 RandomMapper::~RandomMapper() {}
 
 u32 RandomMapper::map(u32 _numExecuters, const ActiveComponent* _component) {
-  (void)_component;  // unused
-  return random_->nextU64(0, _numExecuters - 1);
+  return _component->simulator->random()->nextU64(0, _numExecuters - 1);
 }
 
 }  // namespace des

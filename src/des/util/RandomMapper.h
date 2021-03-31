@@ -33,19 +33,15 @@
 
 #include "des/Mapper.h"
 #include "prim/prim.h"
-#include "rnd/Random.h"
 
 namespace des {
 
 class RandomMapper : public Mapper {
  public:
-  explicit RandomMapper(rnd::Random* _random);
+  RandomMapper();
   ~RandomMapper();
 
   u32 map(u32 _numExecuters, const ActiveComponent* _component) override;
-
- private:
-  rnd::Random* random_;
 };
 
 }  // namespace des
