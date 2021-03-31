@@ -30,7 +30,6 @@
  */
 #include "des/Simulator.h"
 
-#include <random>
 #include <vector>
 
 #include "des/ActiveComponent.h"
@@ -410,26 +409,28 @@ TEST(Simulator, isCycle) {
 
 namespace {
 struct UseRandomComponent : public des::ActiveComponent {
-  std::mt19937 prng;
+  rnd::Random* sim_random;
   std::vector<u64> values;
 
   UseRandomComponent(des::Simulator* _simulator, const std::string& _name,
-                     u32 _id)
-      : des::ActiveComponent(_simulator, _name) {
-    prng.seed(_id);
-  }
+                     u32 /*_id*/)
+      : des::ActiveComponent(_simulator, _name) {}
 
   void generateEvents(u32 _num_events) {
+    sim_random = simulator->random();
     // Each event is generated in sequential ticks with random epsilons.
     // This tests the executer-level reproducibility.
     for (u32 e = 0; e < _num_events; e++) {
-      des::Time time(simulator->time().tick() + e, prng() % des::EPSILON_INV);
+      des::Time time(simulator->time().tick() + e,
+                     sim_random->nextU64() % des::EPSILON_INV);
       simulator->addEvent(new des::Event(
-          this, std::bind(&UseRandomComponent::getRandom, this), time, true));
+          this, std::bind(&UseRandomComponent::getRandomValue, this), time,
+          true));
     }
   }
 
-  void getRandom() {
+  void getRandomValue() {
+    ASSERT_NE(simulator->random(), sim_random);
     values.push_back(simulator->random()->nextU64());
   }
 };
