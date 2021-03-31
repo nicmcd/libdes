@@ -48,6 +48,7 @@ class Logger {
   ~Logger();
 
   void log(const char* _message, u64 _len);
+  void log(const std::string& _message);
 
  private:
   bool close_;

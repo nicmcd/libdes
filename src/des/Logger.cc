@@ -85,4 +85,8 @@ void Logger::log(const char* _message, u64 _len) {
   lock_.unlock();
 }
 
+void Logger::log(const std::string& _message) {
+  log(_message.c_str(), _message.size());
+}
+
 }  // namespace des
