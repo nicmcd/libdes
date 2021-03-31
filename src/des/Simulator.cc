@@ -167,7 +167,7 @@ void Simulator::setObservingInterval(f64 _interval) {
 
 void Simulator::setObservingPower(u32 _expPow2Events) {
   assert(_expPow2Events < 64);
-  observingMask_ = 1 << (u64)_expPow2Events;
+  observingMask_ = (1 << (u64)_expPow2Events) - 1;
 }
 
 void Simulator::addComponent(Component* _component) {
