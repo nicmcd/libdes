@@ -425,8 +425,7 @@ struct UseRandomComponent : public des::ActiveComponent {
     for (u32 e = 0; e < _num_events; e++) {
       des::Time time(simulator->time().tick() + e, prng() % des::EPSILON_INV);
       simulator->addEvent(new des::Event(
-          this, std::bind(&UseRandomComponent::getRandom, this),
-          time, true));
+          this, std::bind(&UseRandomComponent::getRandom, this), time, true));
     }
   }
 

@@ -117,9 +117,9 @@ class Simulator {
   typedef std::priority_queue<Event*, std::vector<Event*>, EventComparator>
       EventQueue;
 
-  // this defines objects held for each executer
+  // this defines a set of event queues for each executer
   //  these are cache line aligned and padded individually
-  struct alignas(CACHELINE_SIZE) ExecuterSet {
+  struct alignas(CACHELINE_SIZE) QueueSet {
     // this is an initial padding incase the object is dynamically allocated,
     //  which does not adhere to the alignas specifier
     char padding0[CACHELINE_SIZE];
@@ -131,10 +131,6 @@ class Simulator {
     // a time ordered event queue
     EventQueue pqueue;
     char padding2[CLPAD(sizeof(pqueue))];
-
-    // a random number generator
-    rnd::Random random;
-    char padding3[CLPAD(sizeof(random))];
   };
 
   // this is a struct for holding an atomic minTime
@@ -199,21 +195,21 @@ class Simulator {
 
   // this initializes executer id and executer specific barrier data
   // Args:
-  //  _id - the ID of this executer
   // _minTimeArrays - a pointer to a vector of MinTime arrays
-  void barrierExecuterInit(u32 _id, std::vector<MinTime*>* _minTimeArrays);
+  void barrierExecuterInit(std::vector<MinTime*>* _minTimeArrays);
 
   // this is the barrier function each executer thread calls on each time step
   // Args:
-  //  _id - the ID of this executer
   //  _minTimeStep - minimum timestep desired by this executer
   //  _executed - number of events executed by this executer
   // Return:
   //  the next TimeStep to be executed
-  TimeStep barrier(u32 _id, TimeStep _minTimeStep, u64 _executed);
+  TimeStep barrier(TimeStep _minTimeStep, u64 _executed);
 
   // info
   const u32 numExecuters_;
+  u64 seed_;
+  rnd::Random random_;
   State state_;
   Stats stats_;
   bool running_;
@@ -223,7 +219,7 @@ class Simulator {
   u32 barrierIterations_;
 
   // per-executer structure
-  ExecuterSet* executerSets_;
+  QueueSet* queueSets_;
 
   // logger
   Logger* logger_;

@@ -69,9 +69,12 @@ struct alignas(CACHELINE_SIZE) ExecuterState {
   // this is a local pointer to all executer MinTime arrays
   std::vector<Simulator::MinTime*> minTimeArrays;
 
+  // a random number generator
+  rnd::Random random;
+
   // ensure no contention across threads
-  char padding4[CLPAD(sizeof(id) + sizeof(currTimeStep) + sizeof(minTimeStep) +
-                      sizeof(epoch) + sizeof(minTimeArrays))];
+  char padding[CLPAD(sizeof(id) + sizeof(currTimeStep) + sizeof(minTimeStep) +
+                     sizeof(epoch) + sizeof(minTimeArrays) + sizeof(random))];
 };
 
 // this creates a thread local version of ExecuterState for each executer
@@ -95,7 +98,7 @@ Simulator::Simulator(u32 _numExecuters)
   assert(!Time::create(TIMESTEP_INF).valid());
 
   // create the event queues
-  executerSets_ = new ExecuterSet[numExecuters_ + 1];  // +1 for tail padding
+  queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding
 
   // initialize the state
   running_ = false;
@@ -118,7 +121,7 @@ Simulator::Simulator(u32 _numExecuters)
 
 Simulator::~Simulator() {
   assert(components_.size() == 0);
-  delete[] executerSets_;
+  delete[] queueSets_;
 }
 
 u32 Simulator::executers() const {
@@ -287,11 +290,11 @@ void Simulator::addEvent(Event* _event) const {
   u32 id = _event->executer_;
   if (id != exeState.id) {
     // this event is crossing executers, put it into the oqueue
-    MpScQueue& oqueue = executerSets_[id].oqueue;
+    MpScQueue& oqueue = queueSets_[id].oqueue;
     oqueue.push(_event);
   } else {
     // this event is NOT crossing executers, put it directly into the pqueue
-    EventQueue& pqueue = executerSets_[id].pqueue;
+    EventQueue& pqueue = queueSets_[id].pqueue;
     pqueue.push(_event);
   }
 
@@ -313,8 +316,8 @@ void Simulator::simulate() {
   // find the first time to simulate
   TimeStep firstTimeStep = TIMESTEP_INF;
   for (u32 id = 0; id < numExecuters_; id++) {
-    MpScQueue& oqueue = executerSets_[id].oqueue;
-    EventQueue& pqueue = executerSets_[id].pqueue;
+    MpScQueue& oqueue = queueSets_[id].oqueue;
+    EventQueue& pqueue = queueSets_[id].pqueue;
 
     // transfer from oqueue to pqueue
     {
@@ -399,13 +402,16 @@ void Simulator::simulate() {
 }
 
 void Simulator::seed(u64 _seed) {
-  for (u32 e = 0; e < numExecuters_; e++) {
-    executerSets_[e].random.seed(_seed + e);
-  }
+  assert(!running_);
+  seed_ = _seed;
+  random_.seed(seed_);
 }
 
 rnd::Random* Simulator::random() {
-  return &executerSets_[executerId()].random;
+  if (running_) {
+    return &exeState.random;
+  }
+  return &random_;
 }
 
 u32 Simulator::executerId() const {
@@ -414,12 +420,18 @@ u32 Simulator::executerId() const {
 
 void Simulator::executer(u32 _id,
                          std::vector<Simulator::MinTime*>* _minTimeArrays) {
+  // set up the thread local executer id
+  exeState.id = _id;
+
+  // seed the random
+  exeState.random.seed(seed_ + exeState.id);
+
   // init the barrier for this executer
-  barrierExecuterInit(_id, _minTimeArrays);
+  barrierExecuterInit(_minTimeArrays);
 
   // get a reference to the event queues
-  MpScQueue& oqueue = executerSets_[_id].oqueue;
-  EventQueue& pqueue = executerSets_[_id].pqueue;
+  MpScQueue& oqueue = queueSets_[exeState.id].oqueue;
+  EventQueue& pqueue = queueSets_[exeState.id].pqueue;
 
   // get the original time step
   exeState.currTimeStep = timeStep_;
@@ -480,7 +492,7 @@ void Simulator::executer(u32 _id,
     TimeStep minTimeStep = std::min(exeState.minTimeStep, queueMinTimeStep);
 
     // hit the barrier, get the new time step to execute
-    exeState.currTimeStep = barrier(_id, minTimeStep, executed);
+    exeState.currTimeStep = barrier(minTimeStep, executed);
 
     // break the execution loop when done
     if (exeState.currTimeStep == TIMESTEP_INF) {
@@ -498,10 +510,7 @@ void Simulator::barrierInit(TimeStep _firstTimeStep) {
 }
 
 void Simulator::barrierExecuterInit(
-    u32 _id, std::vector<Simulator::MinTime*>* _minTimeArrays) {
-  // set up the thread local executer id
-  exeState.id = _id;
-
+    std::vector<Simulator::MinTime*>* _minTimeArrays) {
   // always start on epoch false(0)
   //  this is used in the barrier
   exeState.epoch = false;
@@ -516,7 +525,7 @@ void Simulator::barrierExecuterInit(
   }
 
   // publish a pointer to the array
-  _minTimeArrays->at(_id) = minTimeArray;
+  _minTimeArrays->at(exeState.id) = minTimeArray;
 
   // announce that this thread's MinTime array is set
   state_.yetToArrive--;
@@ -536,7 +545,7 @@ void Simulator::barrierExecuterInit(
   }
 }
 
-TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
+TimeStep Simulator::barrier(TimeStep _minTimeStep, u64 _executed) {
   TimeStep minTimeStep = _minTimeStep;
 
   // update the executed counter
@@ -546,13 +555,14 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
 
   if (numExecuters_ > 1) {
     for (u32 iter = 0; iter < barrierIterations_; iter++) {
-      u32 dist = 1 << iter;                     // pow(2, iter)
-      u32 peer = (_id + dist) % numExecuters_;  // TODO(nic): remove divide
-      assert(peer != _id);
+      u32 dist = 1 << iter;  // pow(2, iter)
+      u32 peer =
+          (exeState.id + dist) % numExecuters_;  // TODO(nic): remove divide
+      assert(peer != exeState.id);
 
       u32 index = 1 + (u32)exeState.epoch * barrierIterations_ + iter;
       assert(index < (1 + 2 * barrierIterations_));
-      Simulator::MinTime* thisArray = exeState.minTimeArrays.at(_id);
+      Simulator::MinTime* thisArray = exeState.minTimeArrays.at(exeState.id);
       Simulator::MinTime* peerArray = exeState.minTimeArrays.at(peer);
 
       // set minTimeStep to peer thread
@@ -574,7 +584,7 @@ TimeStep Simulator::barrier(u32 _id, TimeStep _minTimeStep, u64 _executed) {
   }
 
   // executer N-1 will record statistics
-  if (_id == (numExecuters_ - 1)) {
+  if (exeState.id == (numExecuters_ - 1)) {
     // increment the timeStep counter
     stats_.timeStepCount++;
 
