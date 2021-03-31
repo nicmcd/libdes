@@ -48,6 +48,7 @@
 #include "des/Time.h"
 #include "des/cacheline_util.h"
 #include "prim/prim.h"
+#include "rnd/Random.h"
 
 namespace des {
 
@@ -104,6 +105,10 @@ class Simulator {
   void addEvent(Event* _event) const;
   void simulate();
 
+  // random number generation
+  void seed(u64 _seed);
+  rnd::Random* random();
+
   // this is used for subclasses to generate executer specific data structures
   u32 executerId() const;
 
@@ -112,20 +117,24 @@ class Simulator {
   typedef std::priority_queue<Event*, std::vector<Event*>, EventComparator>
       EventQueue;
 
-  // this defines a set of event queues for each executer
+  // this defines objects held for each executer
   //  these are cache line aligned and padded individually
-  struct alignas(CACHELINE_SIZE) QueueSet {
+  struct alignas(CACHELINE_SIZE) ExecuterSet {
     // this is an initial padding incase the object is dynamically allocated,
     //  which does not adhere to the alignas specifier
     char padding0[CACHELINE_SIZE];
 
     // a multi-producer single-consumer event queue for lockfree staging
     MpScQueue oqueue;
-    char padding1[CACHELINE_SIZE];
+    char padding1[CLPAD(sizeof(oqueue))];
 
     // a time ordered event queue
     EventQueue pqueue;
-    char padding2[CACHELINE_SIZE];
+    char padding2[CLPAD(sizeof(pqueue))];
+
+    // a random number generator
+    rnd::Random random;
+    char padding3[CLPAD(sizeof(random))];
   };
 
   // this is a struct for holding an atomic minTime
@@ -213,8 +222,8 @@ class Simulator {
   // number of iterations in the barriers
   u32 barrierIterations_;
 
-  // per-executer queue sets
-  QueueSet* queueSets_;
+  // per-executer structure
+  ExecuterSet* executerSets_;
 
   // logger
   Logger* logger_;

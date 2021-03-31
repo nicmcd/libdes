@@ -95,7 +95,7 @@ Simulator::Simulator(u32 _numExecuters)
   assert(!Time::create(TIMESTEP_INF).valid());
 
   // create the event queues
-  queueSets_ = new QueueSet[numExecuters_ + 1];  // +1 for tail padding
+  executerSets_ = new ExecuterSet[numExecuters_ + 1];  // +1 for tail padding
 
   // initialize the state
   running_ = false;
@@ -118,7 +118,7 @@ Simulator::Simulator(u32 _numExecuters)
 
 Simulator::~Simulator() {
   assert(components_.size() == 0);
-  delete[] queueSets_;
+  delete[] executerSets_;
 }
 
 u32 Simulator::executers() const {
@@ -287,11 +287,11 @@ void Simulator::addEvent(Event* _event) const {
   u32 id = _event->executer_;
   if (id != exeState.id) {
     // this event is crossing executers, put it into the oqueue
-    MpScQueue& oqueue = queueSets_[id].oqueue;
+    MpScQueue& oqueue = executerSets_[id].oqueue;
     oqueue.push(_event);
   } else {
     // this event is NOT crossing executers, put it directly into the pqueue
-    EventQueue& pqueue = queueSets_[id].pqueue;
+    EventQueue& pqueue = executerSets_[id].pqueue;
     pqueue.push(_event);
   }
 
@@ -313,8 +313,8 @@ void Simulator::simulate() {
   // find the first time to simulate
   TimeStep firstTimeStep = TIMESTEP_INF;
   for (u32 id = 0; id < numExecuters_; id++) {
-    MpScQueue& oqueue = queueSets_[id].oqueue;
-    EventQueue& pqueue = queueSets_[id].pqueue;
+    MpScQueue& oqueue = executerSets_[id].oqueue;
+    EventQueue& pqueue = executerSets_[id].pqueue;
 
     // transfer from oqueue to pqueue
     {
@@ -398,6 +398,16 @@ void Simulator::simulate() {
   }
 }
 
+void Simulator::seed(u64 _seed) {
+  for (u32 e = 0; e < numExecuters_; e++) {
+    executerSets_[e].random.seed(_seed + e);
+  }
+}
+
+rnd::Random* Simulator::random() {
+  return &executerSets_[executerId()].random;
+}
+
 u32 Simulator::executerId() const {
   return exeState.id;
 }
@@ -408,8 +418,8 @@ void Simulator::executer(u32 _id,
   barrierExecuterInit(_id, _minTimeArrays);
 
   // get a reference to the event queues
-  MpScQueue& oqueue = queueSets_[_id].oqueue;
-  EventQueue& pqueue = queueSets_[_id].pqueue;
+  MpScQueue& oqueue = executerSets_[_id].oqueue;
+  EventQueue& pqueue = executerSets_[_id].pqueue;
 
   // get the original time step
   exeState.currTimeStep = timeStep_;

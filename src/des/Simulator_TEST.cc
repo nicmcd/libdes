@@ -41,6 +41,7 @@
 #include "des/util/RoundRobinMapper.h"
 #include "gtest/gtest.h"
 #include "prim/prim.h"
+#include "rnd/Random.h"
 
 namespace {
 class TestComponent : public des::Component {
@@ -83,22 +84,22 @@ class NullComponent : public des::ActiveComponent {
   NullComponent(des::Simulator* _simulator, u64 _id)
       : des::ActiveComponent(_simulator, std::to_string(_id)),
         id_(_id),
-        event_(this, std::bind(&NullComponent::ignoreEvent, this),
-               des::Time()) {
+        event_(this, std::bind(&NullComponent::ignoreEvent, this), des::Time()),
+        prng_(123) {
     debug = true;
   }
 
   void ignoreEvent() {}
 
   void nextEvent() {
-    event_.time += 1 + (prng_() % 100);
+    event_.time += 1 + prng_.nextU64(0, 101);
     simulator->addEvent(&event_);
   }
 
  private:
   u64 id_;
   des::Event event_;
-  std::mt19937_64 prng_;
+  rnd::Random prng_;
 };
 }  // namespace
 
@@ -405,4 +406,80 @@ TEST(Simulator, isCycle) {
   }
 
   sim.simulate();
+}
+
+namespace {
+struct UseRandomComponent : public des::ActiveComponent {
+  std::mt19937 prng;
+  std::vector<u64> values;
+
+  UseRandomComponent(des::Simulator* _simulator, const std::string& _name,
+                     u32 _id)
+      : des::ActiveComponent(_simulator, _name) {
+    prng.seed(_id);
+  }
+
+  void generateEvents(u32 _num_events) {
+    // Each event is generated in sequential ticks with random epsilons.
+    // This tests the executer-level reproducibility.
+    for (u32 e = 0; e < _num_events; e++) {
+      des::Time time(simulator->time().tick() + e, prng() % des::EPSILON_INV);
+      simulator->addEvent(new des::Event(
+          this, std::bind(&UseRandomComponent::getRandom, this),
+          time, true));
+    }
+  }
+
+  void getRandom() {
+    values.push_back(simulator->random()->nextU64());
+  }
+};
+}  // namespace
+
+TEST(Simulator, random) {
+  const u32 executers = 4;
+  const u32 randoms = 400;
+  const u32 check_sims = 100;
+  des::Simulator sim(executers);
+  des::RoundRobinMapper mapper;
+  sim.setMapper(&mapper);
+  std::vector<UseRandomComponent*> components(executers, nullptr);
+  for (u32 c = 0; c < components.size(); c++) {
+    components.at(c) = new UseRandomComponent(&sim, std::to_string(c), c);
+  }
+
+  // Runs one simulation to set the baseline values.
+  sim.seed(12345678);
+  for (u32 c = 0; c < components.size(); c++) {
+    components.at(c)->generateEvents(randoms);
+  }
+  sim.simulate();
+
+  // Collects the values to compare with later values.
+  std::vector<std::vector<u64>> values(executers);
+  for (u32 c = 0; c < components.size(); c++) {
+    values.at(c) = components.at(c)->values;
+    components.at(c)->values.clear();
+  }
+
+  // Runs more simulations and compares the values with the previously generated
+  // values.
+  for (u32 s = 0; s < check_sims; s++) {
+    // Re-seeds the simulator, generates more events, runs the simulator.
+    sim.seed(12345678);
+    for (u32 c = 0; c < components.size(); c++) {
+      components.at(c)->generateEvents(randoms);
+    }
+    sim.simulate();
+
+    // Ensures the values match.
+    for (u32 c = 0; c < components.size(); c++) {
+      ASSERT_EQ(components.at(c)->values, values.at(c));
+      components.at(c)->values.clear();
+    }
+  }
+
+  for (u32 c = 0; c < components.size(); c++) {
+    delete components.at(c);
+  }
 }
