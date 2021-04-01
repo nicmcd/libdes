@@ -44,6 +44,7 @@
 #include "des/Event.h"
 #include "des/Mapper.h"
 #include "des/Observer.h"
+#include "numa/numa.h"
 
 namespace des {
 
@@ -91,6 +92,9 @@ Simulator::Simulator() : Simulator(std::thread::hardware_concurrency()) {}
 
 Simulator::Simulator(u32 _numExecuters)
     : numExecuters_(_numExecuters), logger_(nullptr), mapper_(nullptr) {
+  // check numa
+  assert(numa_available() >= 0);
+
   // check inputs
   assert(numExecuters_ > 0);
 

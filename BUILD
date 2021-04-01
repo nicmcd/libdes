@@ -12,12 +12,12 @@ COPTS = [
 
 LINKOPTS = [
     "-lpthread",
-    "-lnuma",
 ]
 
 LIBS = [
     "@libprim//:prim",
     "@librnd//:rnd",
+    "@numactl//:numa",
     "@zlib//:zlib",
 ]
 

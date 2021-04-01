@@ -31,8 +31,6 @@
 #ifndef DES_SIMULATOR_H_
 #define DES_SIMULATOR_H_
 
-#include <numa.h>
-
 #include <atomic>
 #include <chrono>  // NOLINT
 #include <queue>
