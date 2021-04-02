@@ -59,7 +59,7 @@ http_archive(
   build_file = "@zlib_build//file:downloaded",
 )
 
-hash = "2b65641"
+hash = "6783002"
 http_archive(
   name = "libprim",
   urls = ["https://github.com/nicmcd/libprim/tarball/" + hash],
@@ -67,7 +67,7 @@ http_archive(
   strip_prefix = "nicmcd-libprim-" + hash,
 )
 
-hash = "cc7075f"
+hash = "4c2ee4d"
 http_archive(
   name = "librnd",
   urls = ["https://github.com/nicmcd/librnd/tarball/" + hash],
