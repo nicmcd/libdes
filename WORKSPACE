@@ -67,7 +67,7 @@ http_archive(
   strip_prefix = "nicmcd-libprim-" + hash,
 )
 
-hash = "cc128ec"
+hash = "868faad"
 http_archive(
   name = "librnd",
   urls = ["https://github.com/nicmcd/librnd/tarball/" + hash],
