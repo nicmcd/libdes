@@ -44,7 +44,7 @@
 #include "des/Event.h"
 #include "des/Mapper.h"
 #include "des/Observer.h"
-#include "numa/numa.h"
+#include "numa.h"  // NOLINT
 
 namespace des {
 

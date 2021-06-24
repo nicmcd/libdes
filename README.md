@@ -1,4 +1,5 @@
-# libdes - A framework for parallel discrete event simulation
+# libdes
+A framework for parallel discrete event simulation
 
 ## What is it?
 libdes is a multi-threaded C++ framework for parallel discrete event simulation (DES). Unlike many other DES solutions, libdes's highest priority is programmer productivity. Considerable effort has been placed on the API to support parallel simulations while being easy to use.

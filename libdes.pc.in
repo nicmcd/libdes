@@ -1,0 +1,14 @@
+prefix=@CMAKE_INSTALL_PREFIX@
+exec_prefix=${prefix}/@CMAKE_INSTALL_LIBEXECDIR@
+libdir=${prefix}/@CMAKE_INSTALL_LIBDIR@
+includedir=${prefix}/@CMAKE_INSTALL_INCLUDEDIR@
+datarootdir = ${prefix}/@CMAKE_INSTALL_DATAROOTDIR@
+datadir=${prefix}/@CMAKE_INSTALL_DATADIR@
+
+Name: libdes
+Description: A framework for parallel discrete event simulation
+URL: https://github.com/nicmcd/libdes
+Version: 0.1.0
+Requires: numa,zlib,libprim,librnd
+Libs: -L${libdir} -ldes -lpthread
+Cflags: -I${includedir}
