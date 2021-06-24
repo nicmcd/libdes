@@ -103,6 +103,9 @@ target_link_libraries(
   ${ZLIB_A}
   ${LIBPRIM_A}
   ${LIBRND_A}
+  ${LIBPRIM_A}
+  ${ZLIB_A}
+  ${NUMACTL_A}
   )
 
 include(GNUInstallDirs)
@@ -195,35 +198,35 @@ install(
   FILES
   ${PROJECT_SOURCE_DIR}/src/des/util/SpinLock.h
   DESTINATION
-  ${CMAKE_INSTALL_INCLUDEDIR}/des/
+  ${CMAKE_INSTALL_INCLUDEDIR}/des/util/
   )
 
 install(
   FILES
   ${PROJECT_SOURCE_DIR}/src/des/util/RandomMapper.h
   DESTINATION
-  ${CMAKE_INSTALL_INCLUDEDIR}/des/
+  ${CMAKE_INSTALL_INCLUDEDIR}/des/util/
   )
 
 install(
   FILES
   ${PROJECT_SOURCE_DIR}/src/des/util/BasicObserver.h
   DESTINATION
-  ${CMAKE_INSTALL_INCLUDEDIR}/des/
+  ${CMAKE_INSTALL_INCLUDEDIR}/des/util/
   )
 
 install(
   FILES
   ${PROJECT_SOURCE_DIR}/src/des/util/Scheduler.h
   DESTINATION
-  ${CMAKE_INSTALL_INCLUDEDIR}/des/
+  ${CMAKE_INSTALL_INCLUDEDIR}/des/util/
   )
 
 install(
   FILES
   ${PROJECT_SOURCE_DIR}/src/des/util/RoundRobinMapper.h
   DESTINATION
-  ${CMAKE_INSTALL_INCLUDEDIR}/des/
+  ${CMAKE_INSTALL_INCLUDEDIR}/des/util/
   )
 
 install(
