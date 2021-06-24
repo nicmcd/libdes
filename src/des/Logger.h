@@ -35,7 +35,7 @@
 #include <string>
 
 #include "prim/prim.h"
-#include "zlib/zlib.h"
+#include "zlib.h"  // NOLINT
 
 namespace des {
 
