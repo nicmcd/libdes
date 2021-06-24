@@ -106,6 +106,7 @@ target_link_libraries(
   ${LIBPRIM_A}
   ${ZLIB_A}
   ${NUMACTL_A}
+  pthread
   )
 
 include(GNUInstallDirs)
