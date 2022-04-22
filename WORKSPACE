@@ -51,7 +51,7 @@ http_file(
   urls = ["https://raw.githubusercontent.com/nicmcd/pkgbuild/master/zlib.BUILD"],
 )
 
-version = "1.2.11"
+version = "1.2.12"
 http_archive(
   name = "zlib",
   urls = ["https://www.zlib.net/zlib-" + version + ".tar.gz"],
