@@ -86,7 +86,7 @@ genrule(
     ]),
     outs = ["linted"],
     cmd = """
-    python $(location @cpplint//:cpplint) \
+    python3 $(location @cpplint//:cpplint) \
       --root=$$(pwd)/src \
       --headers=h,tcc \
       --extensions=cc,h,tcc \

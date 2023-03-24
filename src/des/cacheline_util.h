@@ -56,7 +56,9 @@ struct AlignedAndPaddedStruct {
 
 template <typename T>
 struct AlignedAndPaddedStruct<T, true> {
-  using type = struct { alignas(CACHELINE_SIZE) T item; };
+  using type = struct {
+    alignas(CACHELINE_SIZE) T item;
+  };
 };
 
 template <typename T>
